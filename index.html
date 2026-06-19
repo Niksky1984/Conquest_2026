@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#0a0a0c" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="icon" href="Winter_rune.jpg" type="image/jpeg">
+<link rel="apple-touch-icon" href="Winter_rune.jpg">
 <title>Conquest</title>
 
 <link rel="manifest" href='data:application/manifest+json,{"name":"Conquest","short_name":"Conquest","display":"fullscreen","orientation":"portrait","background_color":"%230a0a0c","theme_color":"%230a0a0c","start_url":"."}' />
@@ -56,12 +58,8 @@
     linear-gradient(180deg, rgba(10,10,12,.55) 0%, rgba(10,10,12,.15) 35%,
       rgba(10,10,12,.45) 70%, rgba(10,10,12,.92) 100%);}
 
-  /* ---------- splash screen ---------- */
-  .splash-screen { z-index: 100; background: #000 url("First_page.jpg") center/cover no-repeat; justify-content: flex-end; align-items: center; padding-bottom: max(env(safe-area-inset-bottom), 60px); }
-  .splash-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 100%); z-index: 0; }
-  .splash-content { position: relative; z-index: 1; width: 100%; max-width: 380px; padding: 0 24px; display: flex; flex-direction: column; gap: 14px; }
-  .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.15); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* Intro Screen Image */
+  .intro-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity: 0.6; }
 
   /* ---------- welcome ---------- */
   .welcome{z-index:2;justify-content:space-between;
@@ -116,7 +114,6 @@
     border:2px solid #3a2e22; box-shadow:0 12px 34px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.1);
     font-family:'Cinzel',serif;color:var(--bone);}
   
-  /* High-end CSS Animated Background */
   .hud-bg{position:absolute;inset:0;z-index:0;background:#101116; overflow:hidden;}
   .hud-bg-fallback{
     position:absolute;inset:-50%;
@@ -136,21 +133,18 @@
   @keyframes hudDrift { 0% {transform: rotate(0deg) scale(1);} 100% {transform: rotate(5deg) scale(1.1);} }
   @keyframes hudStars { 0% {transform: translateY(0);} 100% {transform: translateY(24px);} }
   
-  /* HUD Foreground */
-  .hud-content{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(180deg, rgba(22,23,28,.65), rgba(10,10,12,.95)); backdrop-filter:blur(8px);}
+  .hud-content{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(180deg, rgba(22,23,28,.65), rgba(10,10,12,.95)); backdrop-filter:blur(8px);}
   .hud-left{justify-self:start;display:flex;align-items:center;gap:9px;min-width:0;width:100%;}
 
-  /* Avatar */
   .hud-avatar{position:relative;flex:0 0 44px;height:44px;border-radius:50%;background:linear-gradient(180deg, #2a221a, #100d0a);
     border:2px solid #8e734c; box-shadow:0 0 14px rgba(0,0,0,.9), inset 0 2px 4px rgba(255,255,255,.1); display:flex;align-items:center;justify-content:center; overflow:hidden;}
   .hud-avatar img{width:100%;height:100%;object-fit:cover;}
 
   .hud-info{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 auto;}
   .hud-name-row{display:flex;align-items:baseline;gap:6px;min-width:0;}
-  .hud-name{flex:0 0 auto;min-width:0;font-size:14px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#f3e8d3;text-shadow:0 2px 4px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hud-name{flex:1 1 auto;min-width:0;font-size:14px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#f3e8d3;text-shadow:0 2px 4px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .hud-lvl{flex:0 0 auto;font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.04em;text-shadow:0 2px 4px rgba(0,0,0,.9);}
 
-  /* Hearthstone style XP bar (Icy Blue) */
   .hud-xp-row {display:flex; align-items:center; gap:6px;}
   .hud-xp-bar{flex:0 0 auto;width:64px;height:8px;background:#050608;border-radius:4px;border:1px solid #3a2e22;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,.8);}
   .hud-xp-fill{position:absolute;top:0;left:0;bottom:0;width:0%;background:linear-gradient(90deg, #1e3a8a, #3fd4ff);box-shadow:0 0 8px #3fd4ff;transition:width .5s ease;overflow:hidden;}
@@ -158,24 +152,20 @@
   @keyframes xpShine{0%{transform:translateX(-160%);}55%,100%{transform:translateX(420%);}}
   .hud-xp-text{flex:0 0 auto;font-family:'Spectral';font-style:italic;font-size:10px;color:#a89f91;font-weight:600;white-space:nowrap;text-shadow:0 1px 3px #000;}
 
-  /* Middle Connection Indicator (in-flow column — never overlaps) */
-  .hud-middle{justify-self:center;display:flex; flex-direction:column; align-items:center; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:9px; border:1px solid rgba(255,255,255,0.06);}
-  .hud-conn-lbl {font-family:'Cinzel';font-size:8px;letter-spacing:0.1em;color:var(--ash);text-transform:uppercase;margin-bottom:2px;}
-  .hud-conn-status {display:flex;align-items:center;gap:5px;font-family:'Cinzel';font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
-  .hud-conn-status .dot {width:6px;height:6px;border-radius:50%;}
-  .hud-conn-status.on {color:var(--jade);}
-  .hud-conn-status.on .dot {background:var(--jade);box-shadow:0 0 8px var(--jade);}
-  .hud-conn-status.off {color:var(--ember);}
-  .hud-conn-status.off .dot {background:var(--ember);box-shadow:0 0 8px var(--ember);}
-
-  /* Right Side Layout */
-  .hud-right {justify-self:end;display:flex;align-items:center;gap:10px;}
+  /* Right Side Layout - Updated to stack connection badge under stats */
+  .hud-right {justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
   .hud-stats{display:flex;align-items:center;gap:10px;}
   .hud-stat{display:flex;align-items:center;gap:5px;font-size:14px;font-weight:700;letter-spacing:.03em;text-shadow:0 2px 4px rgba(0,0,0,.9);}
   .hud-stat.vnd{color:#ffd56b;}
   .hud-stat.gem{color:#bdf1ff;}
-  .hs-icon{flex:0 0 auto;width:22px;height:22px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8));}
-  .hs-icon img{width:100%;height:100%;display:block;border-radius:4px;}
+  .hs-icon{flex:0 0 auto;width:22px;height:22px;object-fit:contain;border-radius:50%;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8));}
+  
+  .hud-conn-status {display:flex;align-items:center;gap:5px;font-family:'Cinzel';font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase; background:rgba(0,0,0,0.4); padding:3px 7px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);}
+  .hud-conn-status .dot {width:5px;height:5px;border-radius:50%;}
+  .hud-conn-status.on {color:var(--jade);}
+  .hud-conn-status.on .dot {background:var(--jade);box-shadow:0 0 6px var(--jade);}
+  .hud-conn-status.off {color:var(--ember);}
+  .hud-conn-status.off .dot {background:var(--ember);box-shadow:0 0 6px var(--ember);}
 
   /* ---------- onboarding / panels ---------- */
   .panel{z-index:3;justify-content:center;align-items:center;
@@ -211,14 +201,12 @@
   .role-tile .t{font-family:'Cinzel';font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:15px;}
   .role-tile .d{font-size:12px;color:var(--ash);text-align:center;line-height:1.4;}
 
-  /* code reveal (master) */
   .code-box{margin:18px 0;padding:18px;border-radius:14px;text-align:center;
     background:#0d0e12;border:1px dashed rgba(217,178,74,.5);}
   .code-box .lbl{font-family:'Cinzel';font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);}
   .code-box .val{font-family:'Cinzel Decorative';font-weight:900;font-size:40px;letter-spacing:.18em;
     color:var(--gold);margin-top:6px;text-shadow:0 0 22px rgba(217,178,74,.35);}
 
-  /* stub screens */
   .stub{z-index:3;justify-content:center;align-items:center;text-align:center;padding:30px;}
   .stub .icon{font-size:46px;margin-bottom:14px;}
   .stub h2{font-family:'Cinzel Decorative';font-weight:700;font-size:26px;margin:0 0 8px;}
@@ -227,14 +215,12 @@
     width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
     background:rgba(16,17,21,.7);border:1px solid var(--line);backdrop-filter:blur(8px);font-size:20px;}
 
-  /* options list */
   .opt-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;
     border-bottom:1px solid var(--line);}
   .opt-row:last-of-type{border-bottom:none;}
   .opt-row .k{font-family:'Cinzel';font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ash);}
   .opt-row .v{font-size:15px;color:var(--bone);}
 
-  /* modal */
   .modal-bg{position:fixed;inset:0;z-index:20;background:rgba(5,5,7,.78);backdrop-filter:blur(4px);
     display:flex;align-items:center;justify-content:center;padding:28px;}
   .modal{width:100%;max-width:360px;background:linear-gradient(180deg,var(--iron),#101116);
@@ -299,7 +285,7 @@
     display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
     background-size:cover;background-position:center;}
   .img-drop .hint{font-family:'Spectral';font-size:13px;color:var(--bone);background:rgba(0,0,0,.5);padding:6px 13px;border-radius:8px;}
-  .world-actions{display:flex;gap:10px;margin-top:30px;width:min(380px,84vw);}
+  .world-actions{display:flex;gap:10px;margin-top:30px;width:min(380px,84vw);flex-wrap:wrap;justify-content:center;}
   .world-actions .btn{margin-top:0;}
 
   /* Requirements Boxes */
@@ -343,7 +329,6 @@
   .m-verdict.win .v-name{color:var(--jade);}
   .m-verdict.lose .v-name{color:var(--ember-glow);}
 
-  /* new conqueror bar: title on top, 16:9 image, reward/penalty, confirm */
   .m-wrap{display:flex;flex-direction:column;}
   .m-title{align-self:center;max-width:92%;display:flex;align-items:center;gap:6px;margin:0 0 7px;font-family:'Cinzel';font-weight:700;font-size:15px;letter-spacing:.05em;color:var(--bone);text-shadow:0 2px 6px #000;cursor:pointer;text-align:center;}
   .m-img{flex:0 0 auto;aspect-ratio:16/9;height:100%;position:relative;overflow:hidden;background:#0d0e12;cursor:pointer;}
@@ -360,7 +345,6 @@
   .m-stake-val{font-family:'Cinzel';font-weight:600;font-size:14px;line-height:1.3;color:#ffd97a;text-shadow:0 1px 3px #000;}
   .m-stake.lose .m-stake-val{color:#ff9b7a;}
 
-  /* popup conditions list (all four verdicts) */
   .task-stakes{flex:0 0 auto;margin:0 0 16px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:rgba(8,8,10,.55);}
   .task-stake-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 14px;font-family:'Cinzel';font-size:14px;border-bottom:1px solid rgba(255,255,255,.07);}
   .task-stake-row:last-child{border-bottom:none;}
@@ -439,6 +423,8 @@ const {
   useRef,
   useCallback
 } = React;
+
+// THIS IS YOUR REAL DATABASE KEY! DO NOT LOSE THIS!
 const firebaseConfig = {
   apiKey: "AIzaSyC_56rn1HanfJNHLik0zJOr7SNqcA50BAE",
   authDomain: "conquest2026-7dc7d.firebaseapp.com",
@@ -447,6 +433,7 @@ const firebaseConfig = {
   messagingSenderId: "1020891121325",
   appId: "1:1020891121325:web:3bfb24062691ce846fa824"
 };
+
 const CONFIGURED = !firebaseConfig.apiKey.startsWith("PASTE_");
 let db = null;
 if (CONFIGURED) {
@@ -484,44 +471,15 @@ const makeCode = () => {
 };
 
 const WORLD_THEMES = {
-  ember: {
-    name: "Emberfall",
-    css: "radial-gradient(125% 90% at 50% 0%, #3a1410 0%, #1a0a0c 45%, #060506 100%)"
-  },
-  abyss: {
-    name: "Abyss",
-    css: "radial-gradient(125% 90% at 50% 0%, #0c2030 0%, #081019 45%, #04060a 100%)"
-  },
-  blood: {
-    name: "Bloodmoon",
-    css: "radial-gradient(125% 90% at 50% 0%, #350f16 0%, #190a0e 45%, #070405 100%)"
-  },
-  jade: {
-    name: "Verdant",
-    css: "radial-gradient(125% 90% at 50% 0%, #0f2c1c 0%, #0a1812 45%, #04080a 100%)"
-  },
-  ash: {
-    name: "Ashlands",
-    css: "radial-gradient(125% 90% at 50% 0%, #2a251f 0%, #161310 45%, #080706 100%)"
-  },
-  void: {
-    name: "The Void",
-    css: "radial-gradient(125% 90% at 50% 0%, #1d1338 0%, #100a22 45%, #05040a 100%)"
-  }
+  ember: { name: "Emberfall", css: "radial-gradient(125% 90% at 50% 0%, #3a1410 0%, #1a0a0c 45%, #060506 100%)" },
+  abyss: { name: "Abyss", css: "radial-gradient(125% 90% at 50% 0%, #0c2030 0%, #081019 45%, #04060a 100%)" },
+  blood: { name: "Bloodmoon", css: "radial-gradient(125% 90% at 50% 0%, #350f16 0%, #190a0e 45%, #070405 100%)" },
+  jade: { name: "Verdant", css: "radial-gradient(125% 90% at 50% 0%, #0f2c1c 0%, #0a1812 45%, #04080a 100%)" },
+  ash: { name: "Ashlands", css: "radial-gradient(125% 90% at 50% 0%, #2a251f 0%, #161310 45%, #080706 100%)" },
+  void: { name: "The Void", css: "radial-gradient(125% 90% at 50% 0%, #1d1338 0%, #100a22 45%, #05040a 100%)" }
 };
 const THEME_KEYS = Object.keys(WORLD_THEMES);
 const themeOf = k => WORLD_THEMES[k] || WORLD_THEMES.ember;
-
-function Splash({ onStart, onQuit }) {
-  return React.createElement("div", { className: "splash-screen fadein", style: { display: 'flex', flexDirection: 'column' } },
-    React.createElement("div", { className: "splash-overlay" }),
-    React.createElement("div", { className: "splash-content" },
-      React.createElement("div", { className: "spinner" }),
-      React.createElement("button", { className: "btn", onClick: onStart }, "Start the game"),
-      React.createElement("button", { className: "btn ghost", onClick: onQuit }, "Quit")
-    )
-  );
-}
 
 function Background() {
   return React.createElement("div", {
@@ -543,34 +501,14 @@ function Background() {
   }));
 }
 
-function Pill({
-  role,
-  connected
-}) {
+function Pill({ role, connected }) {
   const cls = !CONFIGURED ? "off" : connected ? "on" : "off";
   const label = !CONFIGURED ? "No realm" : connected ? "Linked" : "Offline";
-  return React.createElement("div", {
-    className: "pill"
-  }, React.createElement("span", {
-    className: "role"
-  }, role), React.createElement("span", {
-    className: "dot " + cls
-  }), React.createElement("span", null, label));
-}
-
-function Pill({
-  role,
-  connected
-}) {
-  const cls = !CONFIGURED ? "off" : connected ? "on" : "off";
-  const label = !CONFIGURED ? "No realm" : connected ? "Linked" : "Offline";
-  return React.createElement("div", {
-    className: "pill"
-  }, React.createElement("span", {
-    className: "role"
-  }, role), React.createElement("span", {
-    className: "dot " + cls
-  }), React.createElement("span", null, label));
+  return React.createElement("div", { className: "pill" }, 
+    React.createElement("span", { className: "role" }, role), 
+    React.createElement("span", { className: "dot " + cls }), 
+    React.createElement("span", null, label)
+  );
 }
 
 function ConquerorHUD({ identity, connected, realmData }) {
@@ -579,11 +517,6 @@ function ConquerorHUD({ identity, connected, realmData }) {
   const li = levelInfo(realmData && realmData.slaveXP || 0);
   const vnd = fmtVND(realmData && realmData.slaveVND || 0);
   const crystals = realmData && realmData.slaveCrystals || 0;
-  
-  // Bulletproof embedded SVGs - No external files needed
-  const RUNE_IMG = "data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%23d9b24a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2L6 8L10 12L6 16L12 22L18 16L14 12L18 8Z'/%3E%3Cpath d='M10 12L14 12'/%3E%3C/svg%3E";
-  const COIN_IMG = "data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='9' fill='%23e0b53e' stroke='%23f7df8e' stroke-width='1.4'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23a9801f' stroke-width='1'/%3E%3Ctext x='12' y='16' text-anchor='middle' font-size='11' font-family='Georgia,serif' font-weight='bold' fill='%235a3c0a'%3E₫%3C/text%3E%3C/svg%3E";
-  const GEM_IMG = "data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 3h12l4 6-10 12L2 9z' fill='%2343cdef' stroke='%23cdf3ff' stroke-width='1'/%3E%3Cpath d='M2 9h20' stroke='%23cdf3ff' stroke-width='.7' opacity='.6'/%3E%3Cpath d='M9 3l3 18M15 3l-3 18' stroke='%231a3a5c' stroke-width='.7' opacity='.4'/%3E%3C/svg%3E";
 
   return React.createElement("div", { className: "hud fadein" },
     React.createElement("div", { className: "hud-bg" },
@@ -591,15 +524,15 @@ function ConquerorHUD({ identity, connected, realmData }) {
     ),
     React.createElement("div", { className: "hud-content" },
       React.createElement("div", { className: "hud-left" },
-        React.createElement("div", { className: "hud-avatar" }, 
-          React.createElement("img", { src: RUNE_IMG, alt: "Rune", style: { width: '26px', height: '26px', filter: 'drop-shadow(0 0 6px rgba(0,0,0,.7))' } })
+        React.createElement("div", { className: "hud-avatar" },
+          React.createElement("img", { src: "Winter_rune.jpg", alt: "Rune" })
         ),
         React.createElement("div", { className: "hud-info" },
           React.createElement("div", { className: "hud-name-row" },
-            React.createElement("span", { className: "hud-name" }, identity.slaveName),
-            React.createElement("span", { className: "hud-lvl" }, "Lvl ", li.level)
+            React.createElement("span", { className: "hud-name" }, identity.slaveName)
           ),
           React.createElement("div", { className: "hud-xp-row", style: { marginTop: '3px' } },
+            React.createElement("span", { className: "hud-lvl" }, "Lvl ", li.level),
             React.createElement("div", { className: "hud-xp-bar" },
               React.createElement("div", { className: "hud-xp-fill", style: { width: li.pct + "%" } })
             ),
@@ -607,25 +540,32 @@ function ConquerorHUD({ identity, connected, realmData }) {
           )
         )
       ),
-      React.createElement("div", { className: "hud-middle" },
-        React.createElement("div", { className: "hud-conn-lbl" }, "Conqueror"),
-        React.createElement("div", { className: "hud-conn-status " + (connected ? "on" : "off") },
-          React.createElement("span", { className: "dot" }),
-          React.createElement("span", null, connected ? "Linked" : "Offline")
-        )
-      ),
       React.createElement("div", { className: "hud-right" },
         React.createElement("div", { className: "hud-stats" },
           React.createElement("span", { className: "hud-stat vnd" },
             vnd,
-            React.createElement("span", { className: "hs-icon" }, React.createElement("img", { src: COIN_IMG, alt: "₫", style: { width: '100%', height: '100%' } }))
+            React.createElement("img", { src: "money sign.jpg", className: "hs-icon", alt: "VND" })
           ),
           React.createElement("span", { className: "hud-stat gem" },
             crystals,
-            React.createElement("span", { className: "hs-icon" }, React.createElement("img", { src: GEM_IMG, alt: "◆", style: { width: '100%', height: '100%' } }))
+            React.createElement("img", { src: "blue_cristals.jpg", className: "hs-icon", alt: "Crystals" })
           )
+        ),
+        React.createElement("div", { className: "hud-conn-status " + (connected ? "on" : "off") },
+          React.createElement("span", { className: "dot" }),
+          React.createElement("span", null, connected ? "Linked" : "Offline")
         )
       )
+    )
+  );
+}
+
+function IntroScreen({ onStart }) {
+  return React.createElement("div", { className: "screen fadein", style: { background: "#000", alignItems: "center", justifyContent: "flex-end", paddingBottom: "10vh" } },
+    React.createElement("img", { src: "First_page.jpg", className: "intro-bg", alt: "Intro" }),
+    React.createElement("div", { style: { position: "relative", zIndex: 10, width: "min(320px, 80vw)", display: "flex", flexDirection: "column", gap: "14px" } },
+      React.createElement("button", { className: "btn", onClick: onStart, style: { fontSize: "18px", height: "60px", boxShadow: "0 10px 30px rgba(210,74,44,.6)" } }, "Start the game"),
+      React.createElement("button", { className: "btn ghost", onClick: () => window.close(), style: { background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" } }, "Quit")
     )
   );
 }
@@ -799,7 +739,6 @@ function Onboard({
     })
   }, "Take my seat")));
 }
-
 function Welcome({
   identity,
   hasActiveWorld,
@@ -1140,16 +1079,12 @@ function WorldOfConquest({
   const isMaster = identity.role === "master";
   const list = isMaster ? worlds : worlds.filter(w => w.state === "distributed");
   const [editor, setEditor] = useState(null);
-  const [confirmDestroy, setConfirmDestroy] = useState(false);
   const [idx, setIdx] = useState(0);
+  const [destroying, setDestroying] = useState(false);
   const touchX = useRef(null);
   useEffect(() => {
     setIdx(i => Math.min(i, Math.max(0, list.length - 1)));
   }, [list.length]);
-  useEffect(() => {
-    setConfirmDestroy(false);
-  }, [idx]);
-  
   const go = d => setIdx(i => Math.max(0, Math.min(list.length - 1, i + d)));
   const onTouchStart = e => {
     touchX.current = e.touches[0].clientX;
@@ -1202,31 +1137,37 @@ function WorldOfConquest({
     } catch (e) {}
   };
 
-  const requestDestroy = async (w) => {
-      const entered = enteredWorldIds.includes(w.id);
-      if (w.state === "draft" || !entered) {
-          const batch = db.batch();
-          batch.delete(db.collection("realms").doc(realmId).collection("worlds").doc(w.id));
-          if (activeWorldId === w.id) {
-             batch.update(db.collection("realms").doc(realmId), { activeWorldId: null });
-          }
-          await batch.commit();
-          onBack(); 
-      } else {
-          await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({ destroyRequested: true });
-      }
+  const handleDestroy = async (w) => {
+    setDestroying(false);
+    if (!isMaster) return;
+    const hasEntered = enteredWorldIds.includes(w.id);
+    if (!hasEntered || w.state === "draft") {
+      try {
+        await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).delete();
+        onBack();
+      } catch (e) {}
+    } else {
+      try {
+        await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({
+          destroyRequested: true
+        });
+      } catch (e) {}
+    }
   };
+
   const approveDestroy = async (w) => {
-      const batch = db.batch();
-      batch.delete(db.collection("realms").doc(realmId).collection("worlds").doc(w.id));
-      if (activeWorldId === w.id) {
-         batch.update(db.collection("realms").doc(realmId), { activeWorldId: null });
-      }
-      await batch.commit();
+    try {
+      await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).delete();
       onBack();
+    } catch (e) {}
   };
+
   const rejectDestroy = async (w) => {
-      await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({ destroyRequested: false });
+    try {
+      await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({
+        destroyRequested: false
+      });
+    } catch (e) {}
   };
 
   const editorEl = editor && React.createElement(WorldEditor, {
@@ -1235,6 +1176,7 @@ function WorldOfConquest({
     world: editor.mode === "edit" ? editor.world : null,
     onClose: () => setEditor(null)
   });
+  
   if (list.length === 0) {
     return React.createElement("div", {
       className: "screen world-screen fadein"
@@ -1267,8 +1209,6 @@ function WorldOfConquest({
     }, "The map is empty"), React.createElement("p", null, "Your master hasn't distributed any worlds yet. When they do, they'll appear here for you to enter."))), editorEl);
   }
   const w = list[idx];
-  if (!w) return null; 
-  
   const entered = enteredWorldIds.includes(w.id);
   const isActive = activeWorldId === w.id;
   const distributed = w.state === "distributed";
@@ -1277,17 +1217,17 @@ function WorldOfConquest({
   const hasReqs = (w.reqLevel || 0) > 0 || (w.reqXp || 0) > 0 || reqVndRaw > 0 || (w.reqCrystals || 0) > 0;
   const isUnlocked = w.unlocked || !hasReqs;
 
-  const cState = isActive ? "✓ Your current world" : entered ? "Visited" : (!isUnlocked && distributed) ? "🔒 Sealed Realm" : "New Realm";
+  const cState = w.destroyRequested ? "⚠️ DESTRUCTION IMMINENT" : isActive ? "✓ Your current world" : entered ? "Visited" : (!isUnlocked && distributed) ? "🔒 Sealed Realm" : "New Realm";
 
   let primaryAction;
   if (isMaster) {
     if (w.destroyRequested) {
-        primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
-            React.createElement("div", { className: "req-box", style: { background: 'rgba(210,74,44,.15)', borderColor: 'rgba(210,74,44,.4)' } },
-                React.createElement("h4", {style: {color: 'var(--ember-glow)'}}, "Destruction Pending"),
-                React.createElement("p", { style: { fontSize: 13, margin: '0 0 10px', color: 'var(--bone)', textAlign: 'center' } }, "Waiting for Conqueror to approve the destruction.")
-            )
-        );
+      primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
+        React.createElement("div", { className: "req-box", style: { background: 'rgba(210,74,44,.15)', borderColor: 'rgba(210,74,44,.4)' } },
+          React.createElement("h4", { style: { color: 'var(--ember-glow)' } }, "Destruction Requested"),
+          React.createElement("p", { style: { fontSize: 13, margin: '0', color: 'var(--bone)', textAlign: 'center' } }, "Awaiting the Conqueror's acceptance to shatter this world.")
+        )
+      );
     } else if (!isUnlocked && w.unlockRequested) {
       primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
         React.createElement("div", { className: "req-box", style: { background: 'rgba(217,178,74,.15)', borderColor: 'rgba(217,178,74,.4)' } },
@@ -1295,32 +1235,33 @@ function WorldOfConquest({
           React.createElement("p", { style: { fontSize: 13, margin: '0 0 10px', color: 'var(--bone)', textAlign: 'center' } }, "Conqueror meets requirements and wishes to enter."),
           React.createElement("button", { className: "btn", style: { marginTop: 0 }, onClick: () => approveUnlock(w) }, "Approve & Deduct Cost")
         ),
-        React.createElement("button", { className: "btn ghost", onClick: () => setEditor({ mode: "edit", world: w }) }, "Edit")
+        React.createElement("div", { style: { display: 'flex', gap: 10, width: '100%' } },
+          React.createElement("button", { className: "btn ghost", onClick: () => setEditor({ mode: "edit", world: w }) }, "Edit"),
+          React.createElement("button", { className: "btn ghost", style: { borderColor: "var(--ember)", color: "var(--ember-glow)" }, onClick: () => setDestroying(true) }, "Destroy")
+        )
       );
     } else {
-      primaryAction = React.createElement("div", { className: "world-actions", style: { flexWrap: 'wrap', justifyContent: 'center' } },
-        React.createElement("button", { className: "btn ghost", style: {flex: 1, minWidth: '45%'}, onClick: () => setEditor({ mode: "edit", world: w }) }, "Edit"),
-        !distributed && React.createElement("button", { className: "btn", style: {flex: 1, minWidth: '45%'}, onClick: () => distribute(w) }, "Distribute"),
-        distributed && React.createElement("button", { className: "btn", style: { background: "transparent", border: "1px solid var(--jade)", color: "var(--jade)", boxShadow: "none", flex: 1, minWidth: '45%' }, disabled: true }, "Distributed ✓"),
-        
-        confirmDestroy ? React.createElement("div", { style: {width: '100%', display: 'flex', gap: 10, marginTop: 10} },
-            React.createElement("button", { className: "btn ghost", style: {flex: 1}, onClick: () => setConfirmDestroy(false) }, "Cancel"),
-            React.createElement("button", { className: "btn", style: {flex: 1, background: 'var(--ember)'}, onClick: () => { setConfirmDestroy(false); requestDestroy(w); } }, "Confirm Destroy")
-        ) : React.createElement("button", { className: "btn ghost", style: {width: '100%', marginTop: 10, color: 'var(--ember-glow)', borderColor: 'rgba(210,74,44,.4)'}, onClick: () => setConfirmDestroy(true) }, "Destroy World")
+      primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column', gap: 10 } },
+        React.createElement("div", { style: { display: 'flex', gap: 10, width: '100%' } },
+          React.createElement("button", { className: "btn ghost", onClick: () => setEditor({ mode: "edit", world: w }) }, "Edit"),
+          !distributed && React.createElement("button", { className: "btn", onClick: () => distribute(w) }, "Distribute"),
+          distributed && React.createElement("button", { className: "btn", style: { background: "transparent", border: "1px solid var(--jade)", color: "var(--jade)", boxShadow: "none" }, disabled: true }, "Distributed ✓")
+        ),
+        React.createElement("button", { className: "btn ghost", style: { borderColor: "var(--ember)", color: "var(--ember-glow)", width: '100%' }, onClick: () => setDestroying(true) }, "Destroy World")
       );
     }
   } else {
     if (w.destroyRequested) {
-        primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
-           React.createElement("div", { className: "req-box", style: { background: 'rgba(210,74,44,.15)', borderColor: 'rgba(210,74,44,.4)' } },
-               React.createElement("h4", {style: {color: 'var(--ember-glow)'}}, "World Destruction"),
-               React.createElement("p", { style: { fontSize: 13, margin: '0 0 10px', color: 'var(--bone)', textAlign: 'center' } }, "The Master has decreed the destruction of this world."),
-               React.createElement("div", {style: {display: 'flex', gap: 10}},
-                   React.createElement("button", { className: "btn ghost", onClick: () => rejectDestroy(w) }, "Reject"),
-                   React.createElement("button", { className: "btn", style: {background: 'var(--ember)'}, onClick: () => approveDestroy(w) }, "Approve")
-               )
-           )
-       );
+      primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
+        React.createElement("div", { className: "req-box", style: { background: 'rgba(210,74,44,.15)', borderColor: 'rgba(210,74,44,.4)' } },
+          React.createElement("h4", { style: { color: 'var(--ember-glow)' } }, "World Destruction"),
+          React.createElement("p", { style: { fontSize: 13, margin: '0 0 14px', color: 'var(--bone)', textAlign: 'center', lineHeight: 1.5 } }, "The Master has decreed the destruction of this realm. Do you accept this fate?"),
+          React.createElement("div", { style: { display: 'flex', gap: 10 } },
+            React.createElement("button", { className: "btn ghost", onClick: () => rejectDestroy(w) }, "Reject"),
+            React.createElement("button", { className: "btn", style: { background: "linear-gradient(180deg, var(--ember), #a5331c)" }, onClick: () => approveDestroy(w) }, "Approve")
+          )
+        )
+      );
     } else if (!isUnlocked && distributed) {
       const slaveLvl = realmData ? levelInfo(realmData.slaveXP || 0).level : 0;
       const slaveXp = realmData ? realmData.slaveXP || 0 : 0;
@@ -1376,8 +1317,8 @@ function WorldOfConquest({
   }, React.createElement("h1", {
     className: "world-name"
   }, w.title), React.createElement("div", {
-    className: "world-state " + (isMaster && distributed ? "active" : isMaster ? "locked" : isActive ? "active" : (!isUnlocked && distributed) ? "locked" : "")
-  }, isMaster ? (distributed ? "✓ Distributed" : "Draft — not sent yet") : cState), primaryAction), list.length > 1 && React.createElement("div", {
+    className: "world-state " + (w.destroyRequested ? "locked" : isMaster && distributed ? "active" : isMaster ? "locked" : isActive ? "active" : (!isUnlocked && distributed) ? "locked" : "")
+  }, isMaster ? (w.destroyRequested ? "⚠️ Destruction Pending" : distributed ? "✓ Distributed" : "Draft — not sent yet") : cState), primaryAction), list.length > 1 && React.createElement("div", {
     className: "car-dots"
   }, list.map((_, i) => React.createElement("i", {
     key: i,
@@ -1387,7 +1328,22 @@ function WorldOfConquest({
     onClick: () => setEditor({
       mode: "new"
     })
-  }, "＋ Forge"), editorEl);
+  }, "＋ Forge"), editorEl, destroying && React.createElement("div", {
+    className: "modal-bg",
+    onClick: () => setDestroying(false)
+  }, React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation()
+  }, React.createElement("h3", null, "Shatter this World?"), React.createElement("p", null, "If the Conqueror has already entered this world, they must approve its destruction. Otherwise, it will be deleted instantly."), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: () => setDestroying(false)
+  }, "Cancel"), React.createElement("button", {
+    className: "btn",
+    style: { background: "linear-gradient(180deg, var(--ember), #a5331c)" },
+    onClick: () => handleDestroy(w)
+  }, "Confirm Destroy")))));
 }
 
 const fmtReward = r => r ? r.amount + (r.unit || "") : "";
@@ -1403,12 +1359,10 @@ const verdictImg = (m, v) => m && m.verdict ? m.verdict[v + "Image"] || "" : "";
 const isWinClass = v => v === "win" || v === "winPlus";
 
 // ---- economy helpers ----
-// {amount, unit} -> raw VND number (k = x1000, M = x1,000,000)
 const toRaw = (amount, unit) => {
   const n = Number(amount) || 0;
   return unit === "M" ? n * 1000000 : unit === "k" ? n * 1000 : n;
 };
-// raw VND -> compact label (50000 -> "50k", 1500000 -> "1.5M")
 function fmtVND(n) {
   n = Number(n) || 0;
   if (n >= 1000000) {
@@ -1421,9 +1375,7 @@ function fmtVND(n) {
   }
   return String(n);
 }
-// XP needed to advance FROM this level to the next (level 1->2 = 100, 2->3 = 200…)
 const xpToNext = level => level * 100;
-// total XP -> { level, inLevel, need, pct } (level starts at 1)
 function levelInfo(totalXP) {
   let level = 1, rem = Number(totalXP) || 0;
   while (rem >= xpToNext(level)) { rem -= xpToNext(level); level++; }
@@ -2129,7 +2081,7 @@ function ConquerorMission({
   m
 }) {
   const [vi, setVi] = useState(0);
-  const verdict = VERDICTS[vi];
+  const verdict = VERDIcripts[vi];
   const [invite, setInvite] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [shatter, setShatter] = useState(false);
@@ -2339,8 +2291,6 @@ function MasterMission({
   m
 }) {
   const doc = () => mref(realmId, worldId, m.id);
-  const [confirmForce, setConfirmForce] = useState(false);
-
   const approve = async () => {
     const r = m.reward || {};
     const v = m.slaveVerdict;
@@ -2375,32 +2325,6 @@ function MasterMission({
       await batch.commit();
     } catch (_) {}
   };
-  
-  const forceDefeat = async () => {
-      const r = m.reward || {};
-      const penVnd = toRaw(r.penaltyAmount, r.penaltyUnit);
-      const penXp = r.penaltyXp || 0;
-      const penCr = r.penaltyCrystals || 0;
-      try {
-        const batch = db.batch();
-        batch.update(doc(), { state: "failed", slaveVerdict: "lose" });
-        
-        const realmRef = db.collection("realms").doc(realmId);
-        db.runTransaction(async tx => {
-            const snap = await tx.get(realmRef);
-            const d = (snap.exists && snap.data()) || {};
-            tx.update(realmRef, {
-              slaveVND: Math.max(0, (d.slaveVND || 0) - penVnd),
-              slaveXP: Math.max(0, (d.slaveXP || 0) - penXp),
-              slaveCrystals: Math.max(0, (d.slaveCrystals || 0) - penCr)
-            });
-            tx.update(doc(), { state: "failed", slaveVerdict: "lose" });
-        }).catch(() => {});
-        
-        setConfirmForce(false);
-      } catch (e) {}
-  };
-
   const sendBack = async () => {
     const inc = firebase.firestore.FieldValue.increment;
     try {
@@ -2410,13 +2334,37 @@ function MasterMission({
       await batch.commit();
     } catch (_) {}
   };
-  
   const remove = async () => {
     try {
       await doc().delete();
     } catch (_) {}
   };
-  
+  const forceDefeat = async () => {
+    if(!window.confirm("Force this mission to fail? It will deduct any set penalties from the Conqueror instantly.")) return;
+    const r = m.reward || {};
+    const penVnd = toRaw(r.penaltyAmount, r.penaltyUnit);
+    const penXp = r.penaltyXp || 0;
+    const penCr = r.penaltyCrystals || 0;
+    const hasPen = penVnd > 0 || penXp > 0 || penCr > 0;
+    
+    try {
+      if (hasPen) {
+        await db.runTransaction(async tx => {
+          const realmRef = db.collection("realms").doc(realmId);
+          const snap = await tx.get(realmRef);
+          const d = snap.data() || {};
+          tx.update(realmRef, {
+            slaveVND: Math.max(0, (d.slaveVND || 0) - penVnd),
+            slaveXP: Math.max(0, (d.slaveXP || 0) - penXp),
+            slaveCrystals: Math.max(0, (d.slaveCrystals || 0) - penCr)
+          });
+          tx.update(doc(), { state: "failed", slaveVerdict: "lose" });
+        });
+      } else {
+        await doc().update({ state: "failed", slaveVerdict: "lose" });
+      }
+    } catch (_) {}
+  };
   const claim = m.slaveVerdict === "winPlus" ? "Claims a WIN PLUS" : m.slaveVerdict === "losePlus" ? "Claims LOSE PLUS" : "Claims a WIN";
   const labels = {
     ready: "Ready",
@@ -2429,7 +2377,6 @@ function MasterMission({
   const r = m.reward || {};
   const spoils = (r.xp ? "  ·  " + r.xp + " XP" : "") + (r.crystals ? "  ·  " + r.crystals + " ◆" : "") + (penaltyView(r) ? "  ·  " + penaltyView(r) + " on Lose" : "");
   const rewardLine = m.state === "approved" || m.state === "consoled" ? earnedView(m) + " ₫ paid" : r.amount + (r.unit || "") + " ₫" + (r.plusAmount ? "  (+" + r.plusAmount + (r.plusUnit || "") + " on Win Plus)" : "") + (r.loseAmount ? "  (" + r.loseAmount + (r.loseUnit || "") + " on Lose Plus)" : "") + spoils;
-  
   return React.createElement("div", {
     className: "m-master"
   }, React.createElement("div", {
@@ -2447,22 +2394,23 @@ function MasterMission({
     }
   }, rewardLine), React.createElement("div", {
     className: "actions"
-  }, 
-    m.state === "accepted" && (
-      confirmForce ? React.createElement(React.Fragment, null,
-          React.createElement("button", { className: "btn ghost mini", onClick: () => setConfirmForce(false) }, "Cancel"),
-          React.createElement("button", { className: "btn mini", style: {background: 'var(--ember)'}, onClick: forceDefeat }, "Confirm")
-      ) : React.createElement(React.Fragment, null,
-          React.createElement("button", { className: "btn ghost mini", style: {color: 'var(--ember-glow)', borderColor: 'rgba(210,74,44,.4)'}, onClick: () => setConfirmForce(true) }, "Force Defeat"),
-          React.createElement("button", { className: "btn ghost mini", onClick: remove }, "Delete")
-      )
-    ),
-    m.state === "submitted" && React.createElement(React.Fragment, null, 
-      React.createElement("button", { className: "btn ghost mini", onClick: sendBack }, "Send back"), 
-      React.createElement("button", { className: "btn mini", onClick: approve }, "Approve ✓")
-    ),
-    (m.state === "ready" || m.state === "approved" || m.state === "failed" || m.state === "consoled") && React.createElement("button", { className: "btn ghost mini", onClick: remove }, "Delete")
-  ));
+  }, m.state === "submitted" ? React.createElement(React.Fragment, null, React.createElement("button", {
+    className: "btn ghost mini",
+    onClick: sendBack
+  }, "Send back"), React.createElement("button", {
+    className: "btn mini",
+    onClick: approve
+  }, "Approve ✓")) : m.state === "accepted" ? React.createElement(React.Fragment, null, React.createElement("button", {
+    className: "btn ghost mini",
+    onClick: remove
+  }, "Delete"), React.createElement("button", {
+    className: "btn mini ghost",
+    style: { borderColor: "var(--ember)", color: "var(--ember-glow)" },
+    onClick: forceDefeat
+  }, "Force Defeat")) : React.createElement("button", {
+    className: "btn ghost mini",
+    onClick: remove
+  }, "Delete")));
 }
 
 function MyCurrentLine({
@@ -2584,11 +2532,12 @@ function Options({
   identity,
   connected,
   onBack,
-  onReset
+  onReset,
+  onUpdateIdentity
 }) {
   const [confirm, setConfirm] = useState(false);
   const isSlave = identity.role === "slave";
-
+  
   return React.createElement("div", {
     className: "screen panel fadein"
   }, React.createElement("button", {
@@ -2745,9 +2694,8 @@ function Withdraw({
 }
 
 function App() {
-  const [started, setStarted] = useState(false);
   const [identity, setIdentity] = useState(loadIdentity());
-  const [screen, setScreen] = useState("welcome");
+  const [screen, setScreen] = useState("intro");
   const [connected, setConnected] = useState(false);
   const [realmData, setRealmData] = useState(null);
   const [activeWorldId, setActiveWorldId] = useState(null);
@@ -2799,16 +2747,26 @@ function App() {
     window.close();
     setTimeout(() => setQuitting("manual"), 250);
   };
-  
-  if (!started) {
-    return React.createElement(Splash, { onStart: () => setStarted(true), onQuit: doQuit });
-  }
 
-  if (!identity) return React.createElement(React.Fragment, null, React.createElement(Background, null), React.createElement("div", {
-    className: "scrim"
-  }), React.createElement(Onboard, {
-    onDone: onDone
-  }));
+  const handleStartGame = () => {
+    if (identity) {
+      setScreen("welcome");
+    } else {
+      setScreen("onboard");
+    }
+  };
+
+  if (screen === "intro") {
+    return React.createElement(IntroScreen, { onStart: handleStartGame });
+  }
+  
+  if (!identity && screen === "onboard") {
+     return React.createElement(React.Fragment, null, React.createElement(Background, null), React.createElement("div", {
+      className: "scrim"
+    }), React.createElement(Onboard, {
+      onDone: onDone
+    }));
+  }
   
   const back = () => setScreen("welcome");
   const appClass = identity.role === "slave" ? "app-slave" : "app-master";
