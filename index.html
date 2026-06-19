@@ -1,0 +1,2886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0a0c" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Conquest</title>
+
+<link rel="manifest" href='data:application/manifest+json,{"name":"Conquest","short_name":"Conquest","display":"fullscreen","orientation":"portrait","background_color":"%230a0a0c","theme_color":"%230a0a0c","start_url":"."}' />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+<!-- React (no build step) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<!-- Firebase (compat = works without a bundler) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --abyss:#0a0a0c;       /* base background */
+    --iron:#16171c;        /* raised panel */
+    --iron-2:#1f2128;      /* button face */
+    --line:#2c2e36;        /* hairline */
+    --ember:#d24a2c;       /* action / danger */
+    --ember-glow:#ff6a3d;
+    --jade:#46b87a;        /* approved + locked */
+    --gold:#d9b24a;        /* reward */
+    --bone:#e9e3d6;        /* primary text */
+    --ash:#8b8678;         /* muted text */
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:var(--abyss);color:var(--bone);
+    font-family:'Spectral',Georgia,serif;overflow:hidden;overscroll-behavior:none;}
+  #root{height:100%;}
+  button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none;}
+  .display{font-family:'Cinzel Decorative',serif;}
+  .heading{font-family:'Cinzel',serif;letter-spacing:.04em;}
+
+  .screen{position:fixed;inset:0;display:flex;flex-direction:column;}
+
+  /* ---------- video background ---------- */
+  .bg-wrap{position:fixed;inset:0;z-index:0;overflow:hidden;background:#000;}
+  .bg-wrap video,.bg-wrap .bg-fallback{position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;}
+  .bg-fallback{background:
+    radial-gradient(120% 80% at 50% 0%, #241410 0%, #0a0a0c 60%),
+    radial-gradient(100% 60% at 50% 100%, #1a0e14 0%, transparent 70%);}
+  .scrim{position:fixed;inset:0;z-index:1;pointer-events:none;background:
+    linear-gradient(180deg, rgba(10,10,12,.55) 0%, rgba(10,10,12,.15) 35%,
+      rgba(10,10,12,.45) 70%, rgba(10,10,12,.92) 100%);}
+
+  /* ---------- splash screen ---------- */
+  .splash-screen { z-index: 100; background: #000 url("First_page.jpg") center/cover no-repeat; justify-content: flex-end; align-items: center; padding-bottom: max(env(safe-area-inset-bottom), 60px); }
+  .splash-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 100%); z-index: 0; }
+  .splash-content { position: relative; z-index: 1; width: 100%; max-width: 380px; padding: 0 24px; display: flex; flex-direction: column; gap: 14px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.15); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- welcome ---------- */
+  .welcome{z-index:2;justify-content:space-between;
+    padding:max(env(safe-area-inset-top),28px) 22px max(env(safe-area-inset-bottom),26px);}
+  .crest{text-align:center;margin-top:18px;}
+  .crest .mark{font-size:13px;letter-spacing:.5em;color:var(--ember-glow);
+    text-transform:uppercase;opacity:.85;}
+  .crest h1{font-size:clamp(40px,13vw,68px);font-weight:900;margin:.18em 0 0;
+    line-height:.92;color:var(--bone);text-shadow:0 2px 28px rgba(255,106,61,.28),0 1px 0 #000;}
+  .crest .rule{width:64px;height:2px;margin:16px auto 0;
+    background:linear-gradient(90deg,transparent,var(--ember),transparent);}
+
+  .menu{display:flex;flex-direction:column;gap:13px;margin-bottom:6px;}
+  .plate{position:relative;display:flex;align-items:center;justify-content:center;
+    height:60px;border-radius:11px;background:linear-gradient(180deg,var(--iron-2),#121319);
+    border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 8px 22px rgba(0,0,0,.5);
+    font-family:'Cinzel',serif;font-weight:600;font-size:17px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--bone);transition:transform .12s,border-color .2s,box-shadow .2s;}
+  .plate::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;
+    background:var(--ember);box-shadow:0 0 12px var(--ember-glow);opacity:.85;}
+  .plate:active{transform:translateY(1px) scale(.995);}
+  .plate.lit{border-color:rgba(210,74,44,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px rgba(210,74,44,.15),0 8px 26px rgba(0,0,0,.55);}
+  .plate.quit::before{background:var(--ash);box-shadow:none;}
+  .plate.disabled{opacity:.38;pointer-events:none;}
+  .plate.disabled::before{background:var(--ash);box-shadow:none;}
+  .plate .sub{position:absolute;right:14px;font-family:'Spectral';font-size:11px;
+    letter-spacing:.05em;text-transform:none;color:var(--ash);font-style:italic;}
+  .plate.alert{border-color:rgba(217,178,74,.6);animation:plateAlert 1.3s ease-in-out infinite;}
+  .plate.alert::before{background:var(--gold);box-shadow:0 0 12px var(--gold);}
+  .plate.alert .sub{color:var(--gold);font-style:normal;font-family:'Cinzel';letter-spacing:.06em;}
+  @keyframes plateAlert{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 8px 22px rgba(0,0,0,.5);}
+    50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px rgba(217,178,74,.5),0 0 22px 2px rgba(217,178,74,.5);}}
+
+  /* ---------- status pill ---------- */
+  .pill{position:fixed;z-index:5;top:max(env(safe-area-inset-top),12px);right:14px;
+    display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;
+    background:rgba(16,17,21,.7);border:1px solid var(--line);backdrop-filter:blur(8px);
+    font-size:11px;letter-spacing:.06em;color:var(--ash);}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ash);}
+  .dot.on{background:var(--jade);box-shadow:0 0 8px var(--jade);}
+  .dot.off{background:var(--ember);box-shadow:0 0 8px var(--ember);}
+  .pill .role{color:var(--bone);text-transform:uppercase;font-family:'Cinzel';font-weight:500;}
+
+  /* ---------- HUD (Conqueror Top Bar) ---------- */
+  .app-slave .back, .app-slave .world-top, .app-slave .line-head { top: max(env(safe-area-inset-top), 86px); }
+  .app-slave .line-scroll { padding-top: 150px; }
+  .app-slave .welcome { padding-top: max(env(safe-area-inset-top), 106px); }
+  .app-slave .pill { display: none; }
+
+  .hud{position:fixed;z-index:20;top:max(env(safe-area-inset-top),12px);left:12px;right:12px;
+    border-radius:12px; overflow:hidden;
+    border:2px solid #3a2e22; box-shadow:0 12px 34px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.1);
+    font-family:'Cinzel',serif;color:var(--bone);}
+  
+  /* High-end CSS Animated Background */
+  .hud-bg{position:absolute;inset:0;z-index:0;background:#101116; overflow:hidden;}
+  .hud-bg-fallback{
+    position:absolute;inset:-50%;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.4) 0%, transparent 60%),
+      radial-gradient(circle at 80% 20%, rgba(210, 74, 44, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(30, 58, 138, 0.4) 0%, transparent 50%),
+      #080a0f;
+    animation: hudDrift 15s ease-in-out infinite alternate;
+  }
+  .hud-bg-fallback::after {
+    content:''; position:absolute; inset:0;
+    background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 24px 24px; opacity: 0.3;
+    animation: hudStars 20s linear infinite;
+  }
+  @keyframes hudDrift { 0% {transform: rotate(0deg) scale(1);} 100% {transform: rotate(5deg) scale(1.1);} }
+  @keyframes hudStars { 0% {transform: translateY(0);} 100% {transform: translateY(24px);} }
+  
+  /* HUD Foreground */
+  .hud-content{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(180deg, rgba(22,23,28,.65), rgba(10,10,12,.95)); backdrop-filter:blur(8px);}
+  .hud-left{justify-self:start;display:flex;align-items:center;gap:9px;min-width:0;width:100%;}
+
+  /* Avatar */
+  .hud-avatar{position:relative;flex:0 0 44px;height:44px;border-radius:50%;background:linear-gradient(180deg, #2a221a, #100d0a);
+    border:2px solid #8e734c; box-shadow:0 0 14px rgba(0,0,0,.9), inset 0 2px 4px rgba(255,255,255,.1); display:flex;align-items:center;justify-content:center; overflow:hidden;}
+  .hud-avatar img{width:100%;height:100%;object-fit:cover;}
+
+  .hud-info{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 auto;}
+  .hud-name-row{display:flex;align-items:baseline;gap:6px;min-width:0;}
+  .hud-name{flex:0 0 auto;min-width:0;font-size:14px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#f3e8d3;text-shadow:0 2px 4px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hud-lvl{flex:0 0 auto;font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.04em;text-shadow:0 2px 4px rgba(0,0,0,.9);}
+
+  /* Hearthstone style XP bar (Icy Blue) */
+  .hud-xp-row {display:flex; align-items:center; gap:6px;}
+  .hud-xp-bar{flex:0 0 auto;width:64px;height:8px;background:#050608;border-radius:4px;border:1px solid #3a2e22;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,.8);}
+  .hud-xp-fill{position:absolute;top:0;left:0;bottom:0;width:0%;background:linear-gradient(90deg, #1e3a8a, #3fd4ff);box-shadow:0 0 8px #3fd4ff;transition:width .5s ease;overflow:hidden;}
+  .hud-xp-fill::after{content:"";position:absolute;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);transform:translateX(-160%);animation:xpShine 2.6s ease-in-out infinite;}
+  @keyframes xpShine{0%{transform:translateX(-160%);}55%,100%{transform:translateX(420%);}}
+  .hud-xp-text{flex:0 0 auto;font-family:'Spectral';font-style:italic;font-size:10px;color:#a89f91;font-weight:600;white-space:nowrap;text-shadow:0 1px 3px #000;}
+
+  /* Middle Connection Indicator (in-flow column — never overlaps) */
+  .hud-middle{justify-self:center;display:flex; flex-direction:column; align-items:center; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:9px; border:1px solid rgba(255,255,255,0.06);}
+  .hud-conn-lbl {font-family:'Cinzel';font-size:8px;letter-spacing:0.1em;color:var(--ash);text-transform:uppercase;margin-bottom:2px;}
+  .hud-conn-status {display:flex;align-items:center;gap:5px;font-family:'Cinzel';font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
+  .hud-conn-status .dot {width:6px;height:6px;border-radius:50%;}
+  .hud-conn-status.on {color:var(--jade);}
+  .hud-conn-status.on .dot {background:var(--jade);box-shadow:0 0 8px var(--jade);}
+  .hud-conn-status.off {color:var(--ember);}
+  .hud-conn-status.off .dot {background:var(--ember);box-shadow:0 0 8px var(--ember);}
+
+  /* Right Side Layout */
+  .hud-right {justify-self:end;display:flex;align-items:center;gap:10px;}
+  .hud-stats{display:flex;align-items:center;gap:10px;}
+  .hud-stat{display:flex;align-items:center;gap:5px;font-size:14px;font-weight:700;letter-spacing:.03em;text-shadow:0 2px 4px rgba(0,0,0,.9);}
+  .hud-stat.vnd{color:#ffd56b;}
+  .hud-stat.gem{color:#bdf1ff;}
+  .hs-icon{flex:0 0 auto;width:22px;height:22px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8));}
+  .hs-icon img{width:100%;height:100%;display:block;border-radius:4px;}
+
+  /* ---------- onboarding / panels ---------- */
+  .panel{z-index:3;justify-content:center;align-items:center;
+    padding:28px 24px max(env(safe-area-inset-bottom),28px);}
+  .card{width:100%;max-width:430px;background:linear-gradient(180deg,var(--iron),#101116);
+    border:1px solid var(--line);border-radius:18px;padding:26px 22px;
+    box-shadow:0 30px 70px rgba(0,0,0,.6);}
+  .card h2{font-family:'Cinzel Decorative';font-weight:700;font-size:25px;margin:0 0 6px;text-align:center;}
+  .card p.lead{margin:0 0 22px;text-align:center;color:var(--ash);font-size:14px;line-height:1.5;}
+  label.field{display:block;margin:0 0 16px;}
+  label.field span{display:block;font-family:'Cinzel';font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ash);margin-bottom:7px;}
+  input{width:100%;height:50px;padding:0 15px;border-radius:11px;background:#0d0e12;
+    border:1px solid var(--line);color:var(--bone);font-size:16px;font-family:'Spectral';
+    outline:none;transition:border-color .15s;}
+  input:focus{border-color:var(--ember);}
+  input.code{text-align:center;font-family:'Cinzel';font-size:26px;letter-spacing:.5em;
+    text-transform:uppercase;padding-left:.5em;}
+  .btn{width:100%;height:52px;border-radius:12px;font-family:'Cinzel';font-weight:600;
+    font-size:15px;letter-spacing:.12em;text-transform:uppercase;margin-top:8px;
+    background:linear-gradient(180deg,var(--ember),#a5331c);color:#fff;
+    box-shadow:0 8px 24px rgba(210,74,44,.35);transition:transform .1s,opacity .2s;}
+  .btn:active{transform:translateY(1px);}
+  .btn[disabled]{opacity:.45;pointer-events:none;box-shadow:none;}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--bone);box-shadow:none;}
+  .err{color:var(--ember-glow);font-size:13px;text-align:center;min-height:18px;margin-top:4px;}
+
+  .role-pick{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:8px 0 6px;}
+  .role-tile{display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 10px;
+    border-radius:14px;background:#0d0e12;border:1px solid var(--line);transition:.15s;}
+  .role-tile:active{transform:scale(.98);}
+  .role-tile .glyph{font-size:34px;line-height:1;}
+  .role-tile .t{font-family:'Cinzel';font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:15px;}
+  .role-tile .d{font-size:12px;color:var(--ash);text-align:center;line-height:1.4;}
+
+  /* code reveal (master) */
+  .code-box{margin:18px 0;padding:18px;border-radius:14px;text-align:center;
+    background:#0d0e12;border:1px dashed rgba(217,178,74,.5);}
+  .code-box .lbl{font-family:'Cinzel';font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);}
+  .code-box .val{font-family:'Cinzel Decorative';font-weight:900;font-size:40px;letter-spacing:.18em;
+    color:var(--gold);margin-top:6px;text-shadow:0 0 22px rgba(217,178,74,.35);}
+
+  /* stub screens */
+  .stub{z-index:3;justify-content:center;align-items:center;text-align:center;padding:30px;}
+  .stub .icon{font-size:46px;margin-bottom:14px;}
+  .stub h2{font-family:'Cinzel Decorative';font-weight:700;font-size:26px;margin:0 0 8px;}
+  .stub p{color:var(--ash);max-width:300px;line-height:1.55;margin:0 0 26px;}
+  .back{position:fixed;z-index:6;top:max(env(safe-area-inset-top),12px);left:12px;
+    width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+    background:rgba(16,17,21,.7);border:1px solid var(--line);backdrop-filter:blur(8px);font-size:20px;}
+
+  /* options list */
+  .opt-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;
+    border-bottom:1px solid var(--line);}
+  .opt-row:last-of-type{border-bottom:none;}
+  .opt-row .k{font-family:'Cinzel';font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ash);}
+  .opt-row .v{font-size:15px;color:var(--bone);}
+
+  /* modal */
+  .modal-bg{position:fixed;inset:0;z-index:20;background:rgba(5,5,7,.78);backdrop-filter:blur(4px);
+    display:flex;align-items:center;justify-content:center;padding:28px;}
+  .modal{width:100%;max-width:360px;background:linear-gradient(180deg,var(--iron),#101116);
+    border:1px solid var(--line);border-radius:16px;padding:24px;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.7);}
+  .modal h3{font-family:'Cinzel Decorative';font-weight:700;font-size:21px;margin:0 0 8px;}
+  .modal p{color:var(--ash);font-size:14px;line-height:1.5;margin:0 0 20px;}
+  .modal .row{display:flex;gap:12px;}
+  .modal .row .btn{margin:0;flex:1 1 0;min-width:0;}
+
+  /* ---------- world of conquest ---------- */
+  .world-screen{z-index:3;}
+  .world-stage{position:absolute;inset:0;z-index:0;transition:background .5s ease;}
+  .world-vignette{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:linear-gradient(180deg, rgba(6,5,6,.65) 0%, rgba(6,5,6,.1) 30%, rgba(6,5,6,.35) 65%, rgba(6,5,6,.95) 100%);}
+  .world-top{position:fixed;z-index:6;top:max(env(safe-area-inset-top),14px);left:0;right:0;
+    display:flex;align-items:center;justify-content:center;}
+  .world-top .ttl{font-family:'Cinzel';font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--ash);}
+  .world-body{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;
+    padding:90px 26px max(env(safe-area-inset-bottom),32px);}
+  .world-name{font-family:'Cinzel Decorative';font-weight:900;font-size:clamp(34px,11vw,58px);
+    line-height:1;color:var(--bone);text-shadow:0 4px 30px rgba(0,0,0,.6);margin:0;}
+  .world-state{margin-top:18px;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;
+    font-family:'Cinzel';font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    background:rgba(10,10,12,.5);border:1px solid var(--line);backdrop-filter:blur(6px);}
+  .world-state.locked{color:var(--gold);border-color:rgba(217,178,74,.4);}
+  .world-state.active{color:var(--jade);border-color:rgba(70,184,122,.45);}
+  .world-cta{margin-top:36px;width:min(360px,82vw);}
+  .car-arrow{position:fixed;z-index:6;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--bone);
+    background:rgba(10,10,12,.55);border:1px solid var(--line);backdrop-filter:blur(6px);}
+  .car-arrow.l{left:14px;} .car-arrow.r{right:14px;}
+  .car-arrow:active{transform:translateY(-50%) scale(.92);}
+  .car-arrow.hidden{opacity:0;pointer-events:none;}
+  .car-dots{position:fixed;z-index:6;left:0;right:0;bottom:max(env(safe-area-inset-bottom),16px);
+    display:flex;gap:8px;align-items:center;justify-content:center;}
+  .car-dots i{width:7px;height:7px;border-radius:50%;background:rgba(233,227,214,.25);transition:.2s;}
+  .car-dots i.on{background:var(--ember);box-shadow:0 0 8px var(--ember-glow);width:20px;border-radius:4px;}
+  .world-empty{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:30px;gap:8px;}
+  .world-empty .big{font-size:46px;}
+  .world-empty h2{font-family:'Cinzel Decorative';font-weight:700;font-size:24px;margin:6px 0 4px;}
+  .world-empty p{color:var(--ash);max-width:300px;line-height:1.5;margin:0 0 20px;}
+  .fab{position:fixed;z-index:7;right:18px;bottom:max(env(safe-area-inset-bottom),22px);
+    height:52px;padding:0 22px;border-radius:26px;display:flex;align-items:center;gap:8px;
+    font-family:'Cinzel';font-weight:600;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#fff;
+    background:linear-gradient(180deg,var(--ember),#a5331c);box-shadow:0 10px 30px rgba(210,74,44,.4);}
+  .fab:active{transform:translateY(1px);}
+  .theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  .theme-swatch{height:62px;border-radius:11px;border:2px solid transparent;position:relative;overflow:hidden;
+    display:flex;align-items:flex-end;justify-content:center;padding-bottom:7px;}
+  .theme-swatch span{font-family:'Cinzel';font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--bone);text-shadow:0 1px 4px #000;}
+  .theme-swatch.sel{border-color:var(--ember);box-shadow:0 0 0 1px var(--ember),0 0 14px rgba(210,74,44,.4);}
+
+  .world-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .bgtype-tabs{display:flex;gap:8px;margin-bottom:12px;}
+  .bgtype-tabs button{flex:1;height:38px;border-radius:9px;border:1px solid var(--line);background:#0d0e12;
+    font-family:'Cinzel';font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ash);transition:.15s;}
+  .bgtype-tabs button.on{border-color:var(--ember);color:var(--bone);background:#19110f;}
+  .img-drop{height:120px;border-radius:11px;border:1px dashed var(--line);background:#0d0e12;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
+    background-size:cover;background-position:center;}
+  .img-drop .hint{font-family:'Spectral';font-size:13px;color:var(--bone);background:rgba(0,0,0,.5);padding:6px 13px;border-radius:8px;}
+  .world-actions{display:flex;gap:10px;margin-top:30px;width:min(380px,84vw);}
+  .world-actions .btn{margin-top:0;}
+
+  /* Requirements Boxes */
+  .req-box { background:rgba(10,10,12,.7); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:16px 20px; width:min(380px,84vw); backdrop-filter:blur(8px); margin:0 auto 16px; text-align:left; }
+  .req-box h4 { margin:0 0 14px; font-family:'Cinzel'; font-size:14px; color:var(--gold); text-transform:uppercase; text-align:center; letter-spacing:.1em; }
+  .req-row { display:flex; justify-content:space-between; align-items:center; font-family:'Spectral'; font-size:16px; margin-bottom:8px; color:var(--bone); }
+  .req-row:last-child { margin-bottom:0; }
+  .req-row.fail { color:var(--ember-glow); }
+  .req-row.pass { color:var(--jade); }
+
+  /* ---------- my current line ---------- */
+  .line-screen{z-index:3;}
+  .line-head{position:fixed;z-index:6;top:max(env(safe-area-inset-top),14px);left:0;right:0;text-align:center;pointer-events:none;}
+  .line-head .ttl{font-family:'Cinzel';font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ash);}
+  .line-head .line-world{font-family:'Cinzel Decorative';font-weight:700;font-size:19px;color:var(--bone);margin-top:3px;}
+  .line-scroll{position:relative;z-index:2;height:100%;overflow-y:auto;
+    padding:92px 16px max(env(safe-area-inset-bottom),92px);display:flex;flex-direction:column;gap:14px;}
+  .world-pick{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:4px;}
+  .world-pick button{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(16,17,21,.6);
+    font-family:'Cinzel';font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ash);}
+  .world-pick button.on{border-color:var(--ember);color:var(--bone);}
+
+  .mission{position:relative;display:flex;align-items:stretch;height:84px;border-radius:14px;overflow:hidden;
+    border:1px solid #3a3e4c;background:linear-gradient(165deg,#343845 0%,#262a35 45%,#1b1e27 100%);box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07);}
+  .mission.flash{animation:flash 1.7s ease-in-out infinite;cursor:pointer;}
+  @keyframes flash{0%,100%{box-shadow:0 8px 22px rgba(0,0,0,.5);border-color:var(--line);}
+    50%{box-shadow:0 8px 26px rgba(0,0,0,.5),0 0 22px 2px rgba(210,74,44,.55);border-color:rgba(210,74,44,.75);}}
+  .mission.approved{border-color:rgba(70,184,122,.6);box-shadow:0 0 0 1px rgba(70,184,122,.3),0 8px 24px rgba(0,0,0,.5);}
+  .mission.shatter{animation:shatter .7s ease forwards;pointer-events:none;}
+  @keyframes shatter{0%{transform:scale(1);filter:none;opacity:1;}
+    22%{transform:scale(1.05);filter:brightness(1.7) saturate(1.5);}
+    100%{transform:scale(.55) rotate(2.5deg);filter:blur(9px) brightness(.35);opacity:0;}}
+
+  .m-part{display:flex;align-items:center;justify-content:center;position:relative;background-size:cover;background-position:center;}
+  .m-task{flex:0 0 56px;border-right:1px solid rgba(255,255,255,.07);font-size:22px;cursor:pointer;}
+  .m-verdict{flex:1;min-width:0;overflow:hidden;cursor:pointer;user-select:none;flex-direction:row;align-items:center;justify-content:space-between;padding:0 8px;background-size:contain!important;background-repeat:no-repeat;background-position:center;}
+  .m-verdict.win{background:linear-gradient(180deg,rgba(70,184,122,.28),rgba(70,184,122,.07));}
+  .m-verdict.lose{background:linear-gradient(180deg,rgba(210,74,44,.3),rgba(210,74,44,.09));}
+  .v-swipe{flex:0 0 auto;font-family:'Cinzel';font-size:10px;color:#fff;letter-spacing:.04em;background:rgba(0,0,0,.5);padding:3px 7px;border-radius:8px;text-shadow:0 1px 3px #000;}
+  .v-name{flex:0 0 auto;font-family:'Cinzel';font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,.5);text-shadow:0 1px 4px #000;}
+  .m-verdict.win .v-name{color:var(--jade);}
+  .m-verdict.lose .v-name{color:var(--ember-glow);}
+
+  /* new conqueror bar: title on top, 16:9 image, reward/penalty, confirm */
+  .m-wrap{display:flex;flex-direction:column;}
+  .m-title{align-self:center;max-width:92%;display:flex;align-items:center;gap:6px;margin:0 0 7px;font-family:'Cinzel';font-weight:700;font-size:15px;letter-spacing:.05em;color:var(--bone);text-shadow:0 2px 6px #000;cursor:pointer;text-align:center;}
+  .m-img{flex:0 0 auto;aspect-ratio:16/9;height:100%;position:relative;overflow:hidden;background:#0d0e12;cursor:pointer;}
+  .m-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .m-img.win{background:linear-gradient(180deg,rgba(70,184,122,.22),rgba(70,184,122,.05));}
+  .m-img.lose{background:linear-gradient(180deg,rgba(210,74,44,.25),rgba(210,74,44,.06));}
+  .m-img-count{position:absolute;left:6px;bottom:5px;z-index:1;font-family:'Cinzel';font-size:9px;color:#fff;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:7px;text-shadow:0 1px 2px #000;}
+  .m-stake{flex:1;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:0 8px;text-align:center;border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01));}
+  .m-stake.win{background:linear-gradient(180deg,rgba(70,184,122,.2),rgba(70,184,122,.04));}
+  .m-stake.lose{background:linear-gradient(180deg,rgba(210,74,44,.2),rgba(210,74,44,.04));}
+  .m-stake-name{font-family:'Cinzel';font-weight:700;font-size:17px;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 1px 5px #000;}
+  .m-stake.win .m-stake-name{color:#6fe6a6;}
+  .m-stake.lose .m-stake-name{color:#ff8a63;}
+  .m-stake-val{font-family:'Cinzel';font-weight:600;font-size:14px;line-height:1.3;color:#ffd97a;text-shadow:0 1px 3px #000;}
+  .m-stake.lose .m-stake-val{color:#ff9b7a;}
+
+  /* popup conditions list (all four verdicts) */
+  .task-stakes{flex:0 0 auto;margin:0 0 16px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:rgba(8,8,10,.55);}
+  .task-stake-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 14px;font-family:'Cinzel';font-size:14px;border-bottom:1px solid rgba(255,255,255,.07);}
+  .task-stake-row:last-child{border-bottom:none;}
+  .task-stake-row .lbl{flex:0 0 auto;letter-spacing:.1em;text-transform:uppercase;font-weight:700;}
+  .task-stake-row.win .lbl{color:#6fe6a6;}
+  .task-stake-row.lose .lbl{color:#ff8a63;}
+  .task-stake-row .val{flex:1 1 0;min-width:0;text-align:right;color:var(--bone);font-weight:600;word-break:break-word;}
+  .task-stake-row.lose .val{color:#ff9b7a;}
+  .m-reward{flex:0 0 72px;flex-direction:column;border-left:1px solid rgba(255,255,255,.07);border-right:1px solid rgba(255,255,255,.07);}
+  .m-reward .amt{font-family:'Cinzel';font-weight:600;font-size:16px;color:var(--gold);}
+  .m-reward .vnd{font-size:11px;color:var(--ash);}
+  .m-approve{flex:0 0 62px;font-size:26px;color:var(--ash);cursor:pointer;}
+  .m-approve.go{color:#fff;background:linear-gradient(160deg,#ff7a4d 0%,#d24a2c 55%,#a5331c 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 6px rgba(0,0,0,.3);animation:goPulse 1.8s ease-in-out infinite;transition:transform .1s;}
+  .m-approve.go:active{transform:scale(.93);}
+  @keyframes goPulse{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 6px rgba(0,0,0,.3),0 0 8px rgba(255,106,61,.35);}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 6px rgba(0,0,0,.3),0 0 20px 3px rgba(255,106,61,.7);}}
+  .m-approve.sealed{color:var(--jade);}
+  .m-locked{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:rgba(8,8,10,.5);font-family:'Cinzel';font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ash);}
+  .m-locked.approved{background:rgba(70,184,122,.14);color:var(--jade);}
+
+  .m-master{display:flex;flex-direction:column;gap:9px;padding:14px;border-radius:14px;border:1px solid var(--line);
+    background:linear-gradient(180deg,#191a20,#101116);}
+  .m-master .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .m-master .mt{font-family:'Spectral';font-size:14px;color:var(--bone);flex:1;line-height:1.4;}
+  .m-master .st{font-family:'Cinzel';font-size:10px;letter-spacing:.07em;text-transform:uppercase;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ash);white-space:nowrap;}
+  .m-master .st.ready{color:var(--gold);border-color:rgba(217,178,74,.4);}
+  .m-master .st.submitted{color:var(--ember-glow);border-color:rgba(210,74,44,.5);}
+  .m-master .st.approved{color:var(--jade);border-color:rgba(70,184,122,.45);}
+  .m-master .st.failed{color:#8a8a8a;}
+  .m-master .actions{display:flex;gap:8px;}
+  .mini{height:42px!important;padding:0 14px;font-size:12px!important;margin:0!important;}
+
+  .lbl-mini{display:block;font-family:'Cinzel';font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);margin:0 0 8px;}
+  .vimg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .vimg{position:relative;height:74px;border-radius:11px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;cursor:pointer;overflow:hidden;border:1px solid var(--line);background-color:#0d0e12;}
+  .vimg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .vimg-lbl{position:relative;z-index:1;font-family:'Cinzel';font-weight:600;font-size:12px;letter-spacing:.16em;color:#fff;text-shadow:0 1px 4px #000,0 0 8px #000;}
+  .vimg-clear{position:absolute;top:5px;right:5px;z-index:2;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .vimg.win{background:linear-gradient(180deg,rgba(70,184,122,.25),rgba(70,184,122,.05));}
+  .vimg.lose{background:linear-gradient(180deg,rgba(210,74,44,.28),rgba(210,74,44,.06));}
+  .vimg span{font-family:'Cinzel';font-weight:600;font-size:12px;letter-spacing:.16em;color:#fff;text-shadow:0 1px 4px #000;}
+  .reward-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .reward-row .unit{width:46px;height:50px;border-radius:11px;border:1px solid var(--line);background:#0d0e12;color:var(--ash);font-family:'Cinzel';font-weight:600;font-size:16px;}
+  .reward-row .unit.on{border-color:var(--ember);color:var(--bone);background:#19110f;}
+  .reward-row .vnd-big{font-size:22px;color:var(--gold);font-family:'Cinzel';}
+  .spoil-tag{flex:0 0 auto;min-width:20px;text-align:center;font-family:'Cinzel';font-size:13px;color:var(--ash);}
+  .task-modal{padding:0!important;overflow:hidden;}
+  .big-modal{position:relative;width:min(94vw,90vh);aspect-ratio:1/1;max-height:94vh;max-width:94vw!important;padding:0!important;overflow:hidden;display:flex;flex-direction:column;}
+  .invite-modal{position:relative;max-width:min(440px,92vw)!important;width:92vw;max-height:60vh;padding:0!important;overflow:hidden;display:flex;flex-direction:column;}
+  .popup-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0;}
+  .task-scrim{position:relative;z-index:1;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(8,8,10,.62),rgba(8,8,10,.9));padding:24px 22px max(env(safe-area-inset-bottom),22px);}
+  .task-scrim h3{flex:0 0 auto;}
+  .task-text{flex:1 1 auto;min-height:0;overflow-y:auto;color:var(--bone)!important;font-size:17px!important;line-height:1.65!important;white-space:pre-wrap;margin:14px 0 16px!important;text-align:left;}
+  .task-penalty{flex:0 0 auto;margin:0 0 16px;padding:9px 12px;border-radius:10px;background:rgba(210,74,44,.16);border:1px solid rgba(210,74,44,.4);color:var(--ember-glow);font-family:'Cinzel';font-size:13px;letter-spacing:.03em;text-align:center;}
+  .task-scrim .row,.task-scrim .btn{flex:0 0 auto;}
+
+  .ratio{font-family:'Spectral';font-style:italic;font-size:11px;letter-spacing:0;text-transform:none;color:var(--ash);font-weight:400;margin-left:6px;}
+  .ratio-note{font-size:11px;color:var(--ash);font-family:'Spectral';margin:7px 0 0;line-height:1.4;}
+  .img-drop.tall{height:auto;aspect-ratio:3/4;max-height:230px;width:62%;margin:0 auto;}
+  .vimg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+  .vimg-grid .vimg{height:auto;aspect-ratio:16/9;}
+  .m-reward .plus{font-family:'Cinzel';font-size:11px;color:var(--jade);line-height:1;margin-top:1px;}
+
+  .fadein{animation:fade .4s ease both;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const {
+  useState,
+  useEffect,
+  useRef,
+  useCallback
+} = React;
+const firebaseConfig = {
+  apiKey: "AIzaSyC_56rn1HanfJNHLik0zJOr7SNqcA50BAE",
+  authDomain: "conquest2026-7dc7d.firebaseapp.com",
+  projectId: "conquest2026-7dc7d",
+  storageBucket: "conquest2026-7dc7d.firebasestorage.app",
+  messagingSenderId: "1020891121325",
+  appId: "1:1020891121325:web:3bfb24062691ce846fa824"
+};
+const CONFIGURED = !firebaseConfig.apiKey.startsWith("PASTE_");
+let db = null;
+if (CONFIGURED) {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+}
+const LS = "conquest.identity.v1";
+const loadIdentity = () => {
+  try {
+    return JSON.parse(localStorage.getItem(LS));
+  } catch {
+    return null;
+  }
+};
+const saveIdentity = id => localStorage.setItem(LS, JSON.stringify(id));
+const clearIdentity = () => localStorage.removeItem(LS);
+const TLS = "conquest.taskDefaults.v1";
+const loadTaskDefaults = () => {
+  try {
+    return JSON.parse(localStorage.getItem(TLS)) || {};
+  } catch {
+    return {};
+  }
+};
+const saveTaskDefaults = d => {
+  try {
+    localStorage.setItem(TLS, JSON.stringify(d));
+  } catch (_) {}
+};
+const makeCode = () => {
+  const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for (let i = 0; i < 6; i++) s += a[Math.floor(Math.random() * a.length)];
+  return s;
+};
+
+const WORLD_THEMES = {
+  ember: {
+    name: "Emberfall",
+    css: "radial-gradient(125% 90% at 50% 0%, #3a1410 0%, #1a0a0c 45%, #060506 100%)"
+  },
+  abyss: {
+    name: "Abyss",
+    css: "radial-gradient(125% 90% at 50% 0%, #0c2030 0%, #081019 45%, #04060a 100%)"
+  },
+  blood: {
+    name: "Bloodmoon",
+    css: "radial-gradient(125% 90% at 50% 0%, #350f16 0%, #190a0e 45%, #070405 100%)"
+  },
+  jade: {
+    name: "Verdant",
+    css: "radial-gradient(125% 90% at 50% 0%, #0f2c1c 0%, #0a1812 45%, #04080a 100%)"
+  },
+  ash: {
+    name: "Ashlands",
+    css: "radial-gradient(125% 90% at 50% 0%, #2a251f 0%, #161310 45%, #080706 100%)"
+  },
+  void: {
+    name: "The Void",
+    css: "radial-gradient(125% 90% at 50% 0%, #1d1338 0%, #100a22 45%, #05040a 100%)"
+  }
+};
+const THEME_KEYS = Object.keys(WORLD_THEMES);
+const themeOf = k => WORLD_THEMES[k] || WORLD_THEMES.ember;
+
+function Splash({ onStart, onQuit }) {
+  return React.createElement("div", { className: "splash-screen fadein", style: { display: 'flex', flexDirection: 'column' } },
+    React.createElement("div", { className: "splash-overlay" }),
+    React.createElement("div", { className: "splash-content" },
+      React.createElement("div", { className: "spinner" }),
+      React.createElement("button", { className: "btn", onClick: onStart }, "Start the game"),
+      React.createElement("button", { className: "btn ghost", onClick: onQuit }, "Quit")
+    )
+  );
+}
+
+function Background() {
+  return React.createElement("div", {
+    className: "bg-wrap"
+  }, React.createElement("video", {
+    autoPlay: true,
+    muted: true,
+    loop: true,
+    playsInline: true,
+    poster: "background.jpg",
+    onError: e => {
+      e.target.style.display = 'none';
+    }
+  }, React.createElement("source", {
+    src: "background.mp4",
+    type: "video/mp4"
+  })), React.createElement("div", {
+    className: "bg-fallback"
+  }));
+}
+
+function Pill({
+  role,
+  connected
+}) {
+  const cls = !CONFIGURED ? "off" : connected ? "on" : "off";
+  const label = !CONFIGURED ? "No realm" : connected ? "Linked" : "Offline";
+  return React.createElement("div", {
+    className: "pill"
+  }, React.createElement("span", {
+    className: "role"
+  }, role), React.createElement("span", {
+    className: "dot " + cls
+  }), React.createElement("span", null, label));
+}
+
+function Pill({
+  role,
+  connected
+}) {
+  const cls = !CONFIGURED ? "off" : connected ? "on" : "off";
+  const label = !CONFIGURED ? "No realm" : connected ? "Linked" : "Offline";
+  return React.createElement("div", {
+    className: "pill"
+  }, React.createElement("span", {
+    className: "role"
+  }, role), React.createElement("span", {
+    className: "dot " + cls
+  }), React.createElement("span", null, label));
+}
+
+function ConquerorHUD({ identity, connected, realmData }) {
+  if (!identity || identity.role !== "slave") return null;
+
+  const li = levelInfo(realmData && realmData.slaveXP || 0);
+  const vnd = fmtVND(realmData && realmData.slaveVND || 0);
+  const crystals = realmData && realmData.slaveCrystals || 0;
+  
+  // Bulletproof embedded SVGs - No external files needed
+  const RUNE_IMG = "data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%23d9b24a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2L6 8L10 12L6 16L12 22L18 16L14 12L18 8Z'/%3E%3Cpath d='M10 12L14 12'/%3E%3C/svg%3E";
+  const COIN_IMG = "data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='9' fill='%23e0b53e' stroke='%23f7df8e' stroke-width='1.4'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23a9801f' stroke-width='1'/%3E%3Ctext x='12' y='16' text-anchor='middle' font-size='11' font-family='Georgia,serif' font-weight='bold' fill='%235a3c0a'%3E₫%3C/text%3E%3C/svg%3E";
+  const GEM_IMG = "data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 3h12l4 6-10 12L2 9z' fill='%2343cdef' stroke='%23cdf3ff' stroke-width='1'/%3E%3Cpath d='M2 9h20' stroke='%23cdf3ff' stroke-width='.7' opacity='.6'/%3E%3Cpath d='M9 3l3 18M15 3l-3 18' stroke='%231a3a5c' stroke-width='.7' opacity='.4'/%3E%3C/svg%3E";
+
+  return React.createElement("div", { className: "hud fadein" },
+    React.createElement("div", { className: "hud-bg" },
+      React.createElement("div", { className: "hud-bg-fallback" })
+    ),
+    React.createElement("div", { className: "hud-content" },
+      React.createElement("div", { className: "hud-left" },
+        React.createElement("div", { className: "hud-avatar" }, 
+          React.createElement("img", { src: RUNE_IMG, alt: "Rune", style: { width: '26px', height: '26px', filter: 'drop-shadow(0 0 6px rgba(0,0,0,.7))' } })
+        ),
+        React.createElement("div", { className: "hud-info" },
+          React.createElement("div", { className: "hud-name-row" },
+            React.createElement("span", { className: "hud-name" }, identity.slaveName),
+            React.createElement("span", { className: "hud-lvl" }, "Lvl ", li.level)
+          ),
+          React.createElement("div", { className: "hud-xp-row", style: { marginTop: '3px' } },
+            React.createElement("div", { className: "hud-xp-bar" },
+              React.createElement("div", { className: "hud-xp-fill", style: { width: li.pct + "%" } })
+            ),
+            React.createElement("span", { className: "hud-xp-text" }, li.inLevel, "/", li.need, " XP")
+          )
+        )
+      ),
+      React.createElement("div", { className: "hud-middle" },
+        React.createElement("div", { className: "hud-conn-lbl" }, "Conqueror"),
+        React.createElement("div", { className: "hud-conn-status " + (connected ? "on" : "off") },
+          React.createElement("span", { className: "dot" }),
+          React.createElement("span", null, connected ? "Linked" : "Offline")
+        )
+      ),
+      React.createElement("div", { className: "hud-right" },
+        React.createElement("div", { className: "hud-stats" },
+          React.createElement("span", { className: "hud-stat vnd" },
+            vnd,
+            React.createElement("span", { className: "hs-icon" }, React.createElement("img", { src: COIN_IMG, alt: "₫", style: { width: '100%', height: '100%' } }))
+          ),
+          React.createElement("span", { className: "hud-stat gem" },
+            crystals,
+            React.createElement("span", { className: "hs-icon" }, React.createElement("img", { src: GEM_IMG, alt: "◆", style: { width: '100%', height: '100%' } }))
+          )
+        )
+      )
+    )
+  );
+}
+
+function Onboard({
+  onDone
+}) {
+  const [step, setStep] = useState("role");
+  const [master, setMaster] = useState("");
+  const [slave, setSlave] = useState("");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const createRealm = async () => {
+    setErr("");
+    if (!master.trim() || !slave.trim()) {
+      setErr("Both names are needed.");
+      return;
+    }
+    if (!CONFIGURED) {
+      setErr("Add your Firebase keys first (see the README).");
+      return;
+    }
+    setBusy(true);
+    try {
+      const realmId = makeCode();
+      await db.collection("realms").doc(realmId).set({
+        masterName: master.trim(),
+        slaveName: slave.trim(),
+        activeWorldId: null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setCode(realmId);
+      setStep("code");
+    } catch (e) {
+      setErr("Could not reach the realm. Check connection.");
+    }
+    setBusy(false);
+  };
+  const joinRealm = async () => {
+    setErr("");
+    const id = code.trim().toUpperCase();
+    if (id.length !== 6) {
+      setErr("The code is 6 characters.");
+      return;
+    }
+    if (!CONFIGURED) {
+      setErr("Add your Firebase keys first (see the README).");
+      return;
+    }
+    setBusy(true);
+    try {
+      const snap = await db.collection("realms").doc(id).get();
+      if (!snap.exists) {
+        setErr("No realm with that code.");
+        setBusy(false);
+        return;
+      }
+      const d = snap.data();
+      onDone({
+        role: "slave",
+        realmId: id,
+        masterName: d.masterName,
+        slaveName: d.slaveName,
+        displayName: d.slaveName
+      });
+    } catch (e) {
+      setErr("Could not reach the realm. Check connection.");
+    }
+    setBusy(false);
+  };
+  if (step === "role") return React.createElement("div", {
+    className: "screen panel"
+  }, React.createElement("div", {
+    className: "card fadein"
+  }, React.createElement("h2", null, "Enter the Conquest"), React.createElement("p", {
+    className: "lead"
+  }, "Choose your seat at the table. You can change this later in Options."), React.createElement("div", {
+    className: "role-pick"
+  }, React.createElement("button", {
+    className: "role-tile",
+    onClick: () => setStep("master")
+  }, React.createElement("span", {
+    className: "glyph"
+  }, "⚔️"), React.createElement("span", {
+    className: "t"
+  }, "Master"), React.createElement("span", {
+    className: "d"
+  }, "You forge the worlds and approve the deeds")), React.createElement("button", {
+    className: "role-tile",
+    onClick: () => setStep("slave")
+  }, React.createElement("span", {
+    className: "glyph"
+  }, "🛡️"), React.createElement("span", {
+    className: "t"
+  }, "Conqueror"), React.createElement("span", {
+    className: "d"
+  }, "You take the missions and claim the spoils")))));
+  if (step === "master") return React.createElement("div", {
+    className: "screen panel"
+  }, React.createElement("div", {
+    className: "card fadein"
+  }, React.createElement("h2", null, "The Master"), React.createElement("p", {
+    className: "lead"
+  }, "Name yourself and your conqueror. A realm code will be forged to link your two devices."), React.createElement("label", {
+    className: "field"
+  }, React.createElement("span", null, "Your name"), React.createElement("input", {
+    value: master,
+    onChange: e => setMaster(e.target.value),
+    placeholder: "e.g. Nikita"
+  })), React.createElement("label", {
+    className: "field"
+  }, React.createElement("span", null, "Conqueror's name"), React.createElement("input", {
+    value: slave,
+    onChange: e => setSlave(e.target.value),
+    placeholder: "your son's name"
+  })), React.createElement("div", {
+    className: "err"
+  }, err), React.createElement("button", {
+    className: "btn",
+    disabled: busy,
+    onClick: createRealm
+  }, busy ? "Forging…" : "Forge the realm"), React.createElement("button", {
+    className: "btn ghost",
+    onClick: () => setStep("role")
+  }, "Back")));
+  if (step === "slave") return React.createElement("div", {
+    className: "screen panel"
+  }, React.createElement("div", {
+    className: "card fadein"
+  }, React.createElement("h2", null, "The Conqueror"), React.createElement("p", {
+    className: "lead"
+  }, "Enter the realm code your master gives you to link your device to theirs."), React.createElement("label", {
+    className: "field"
+  }, React.createElement("span", null, "Realm code"), React.createElement("input", {
+    className: "code",
+    maxLength: 6,
+    value: code,
+    onChange: e => setCode(e.target.value.toUpperCase()),
+    placeholder: "------"
+  })), React.createElement("div", {
+    className: "err"
+  }, err), React.createElement("button", {
+    className: "btn",
+    disabled: busy,
+    onClick: joinRealm
+  }, busy ? "Linking…" : "Enter the realm"), React.createElement("button", {
+    className: "btn ghost",
+    onClick: () => setStep("role")
+  }, "Back")));
+  if (step === "code") return React.createElement("div", {
+    className: "screen panel"
+  }, React.createElement("div", {
+    className: "card fadein"
+  }, React.createElement("h2", null, "Realm forged"), React.createElement("p", {
+    className: "lead"
+  }, "Give this code to your conqueror so their device can join. Keep it — you'll find it again in Options."), React.createElement("div", {
+    className: "code-box"
+  }, React.createElement("div", {
+    className: "lbl"
+  }, "Realm code"), React.createElement("div", {
+    className: "val"
+  }, code)), React.createElement("button", {
+    className: "btn",
+    onClick: () => onDone({
+      role: "master",
+      realmId: code,
+      masterName: master.trim(),
+      slaveName: slave.trim(),
+      displayName: master.trim()
+    })
+  }, "Take my seat")));
+}
+
+function Welcome({
+  identity,
+  hasActiveWorld,
+  connected,
+  realmData,
+  go,
+  onQuit
+}) {
+  const isSlave = identity.role === "slave";
+  const isMaster = identity.role === "master";
+  const lineDisabled = isSlave && !hasActiveWorld;
+  const pendingApprovals = (realmData && realmData.pendingApprovals) || 0;
+  const pendingWithdraw = realmData && realmData.pendingWithdraw;
+  const items = [{
+    key: "world",
+    label: "World of Conquest"
+  }, {
+    key: "line",
+    label: "My Current Line",
+    disabled: lineDisabled,
+    alert: isMaster && pendingApprovals > 0,
+    sub: lineDisabled ? "enter a world first" : (isMaster && pendingApprovals > 0 ? "● awaiting you" : null)
+  }, {
+    key: "withdraw",
+    label: "Withdraw",
+    alert: isMaster && !!pendingWithdraw,
+    sub: isMaster && pendingWithdraw ? "● request" : null
+  }, {
+    key: "archive",
+    label: "Archive"
+  }, {
+    key: "options",
+    label: "Options"
+  }, {
+    key: "quit",
+    label: "Quit",
+    quit: true
+  }];
+  return React.createElement("div", {
+    className: "screen welcome fadein"
+  }, React.createElement(Pill, {
+    role: identity.role === "master" ? "Master" : "Conqueror",
+    connected: connected
+  }), React.createElement("div", {
+    className: "crest"
+  }, React.createElement("div", {
+    className: "mark"
+  }, "Realm of"), React.createElement("h1", {
+    className: "display"
+  }, "Conquest"), React.createElement("div", {
+    className: "rule"
+  })), React.createElement("div", {
+    className: "menu"
+  }, items.map(it => React.createElement("button", {
+    key: it.key,
+    className: "plate" + (it.quit ? " quit" : "") + (it.disabled ? " disabled" : "") + (it.alert ? " alert" : ""),
+    onClick: () => it.quit ? onQuit() : go(it.key)
+  }, it.label, it.sub && React.createElement("span", {
+    className: "sub"
+  }, it.sub)))));
+}
+
+function compressImage(file, maxDim = 1280, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("read failed"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("decode failed"));
+      img.onload = () => {
+        let w = img.width,
+          h = img.height;
+        const s = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * s);
+        h = Math.round(h * s);
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function worldBgStyle(w) {
+  if (w.bgType === "image" && w.bgImage) return {
+    backgroundImage: "url(" + w.bgImage + ")",
+    backgroundSize: "cover",
+    backgroundPosition: "center"
+  };
+  return {
+    background: themeOf(w.theme).css
+  };
+}
+function WorldStage({
+  w
+}) {
+  return React.createElement("div", {
+    className: "world-stage",
+    style: w.bgType === "video" ? {
+      background: "#000"
+    } : worldBgStyle(w)
+  }, w.bgType === "video" && w.bgVideo && React.createElement("video", {
+    src: w.bgVideo,
+    autoPlay: true,
+    muted: true,
+    loop: true,
+    playsInline: true
+  }));
+}
+
+function WorldEditor({
+  realmId,
+  count,
+  world,
+  onClose
+}) {
+  const editing = !!world;
+  const [title, setTitle] = useState(world ? world.title : "");
+  const [bgType, setBgType] = useState(world ? world.bgType || "preset" : "preset");
+  const [theme, setTheme] = useState(world ? world.theme || THEME_KEYS[0] : THEME_KEYS[0]);
+  const [bgImage, setBgImage] = useState(world ? world.bgImage || "" : "");
+  const [bgVideo, setBgVideo] = useState(world ? world.bgVideo || "" : "");
+  const [reqLevel, setReqLevel] = useState(world ? world.reqLevel || "" : "");
+  const [reqXp, setReqXp] = useState(world ? world.reqXp || "" : "");
+  const [reqVnd, setReqVnd] = useState(world ? world.reqVnd || "" : "");
+  const [reqVndUnit, setReqVndUnit] = useState(world ? world.reqVndUnit || "k" : "k");
+  const [reqCrystals, setReqCrystals] = useState(world ? world.reqCrystals || "" : "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const fileRef = useRef(null);
+  const pickImage = async e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    setErr("");
+    try {
+      const data = await compressImage(f);
+      if (data.length > 950000) {
+        setErr("That image is too large even after shrinking — try a smaller one.");
+        return;
+      }
+      setBgImage(data);
+    } catch (_) {
+      setErr("Couldn't read that image.");
+    }
+  };
+  const save = async () => {
+    if (!title.trim()) return;
+    if (bgType === "video" && !bgVideo.trim()) {
+      setErr("Paste a video link, or pick another background.");
+      return;
+    }
+    if (bgType === "image" && !bgImage) {
+      setErr("Choose an image, or pick another background.");
+      return;
+    }
+    setBusy(true);
+    const data = {
+      title: title.trim(),
+      bgType,
+      theme: theme || THEME_KEYS[0],
+      bgImage: bgType === "image" ? bgImage : "",
+      bgVideo: bgType === "video" ? bgVideo.trim() : "",
+      reqLevel: reqLevel !== "" ? +reqLevel : 0,
+      reqXp: reqXp !== "" ? +reqXp : 0,
+      reqVnd: reqVnd !== "" ? +reqVnd : 0,
+      reqVndUnit,
+      reqCrystals: reqCrystals !== "" ? +reqCrystals : 0
+    };
+    try {
+      const col = db.collection("realms").doc(realmId).collection("worlds");
+      if (editing) {
+        await col.doc(world.id).update(data);
+      } else {
+        await col.add({
+          ...data,
+          order: count,
+          state: "draft",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      onClose();
+    } catch (e) {
+      setErr("Couldn't save. Check connection.");
+      setBusy(false);
+    }
+  };
+  return React.createElement("div", {
+    className: "modal-bg",
+    onClick: onClose
+  }, React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation(),
+    style: {
+      maxWidth: 440,
+      textAlign: "left",
+      maxHeight: "90vh",
+      overflowY: "auto"
+    }
+  }, React.createElement("h3", {
+    style: {
+      textAlign: "center"
+    }
+  }, editing ? "Edit World" : "Forge a World"), React.createElement("label", {
+    className: "field"
+  }, React.createElement("span", null, "World name"), React.createElement("input", {
+    value: title,
+    onChange: e => setTitle(e.target.value),
+    placeholder: "e.g. The Iron Keep",
+    autoFocus: true
+  })), React.createElement("span", {
+    style: {
+      display: "block",
+      fontFamily: "'Cinzel'",
+      fontSize: 12,
+      letterSpacing: ".1em",
+      textTransform: "uppercase",
+      color: "var(--ash)",
+      marginBottom: 8
+    }
+  }, "Background"), React.createElement("div", {
+    className: "bgtype-tabs"
+  }, React.createElement("button", {
+    className: bgType === "preset" ? "on" : "",
+    onClick: () => setBgType("preset")
+  }, "Preset"), React.createElement("button", {
+    className: bgType === "image" ? "on" : "",
+    onClick: () => setBgType("image")
+  }, "Image"), React.createElement("button", {
+    className: bgType === "video" ? "on" : "",
+    onClick: () => setBgType("video")
+  }, "Video")), bgType === "preset" && React.createElement("div", {
+    className: "theme-grid",
+    style: {
+      marginBottom: 16
+    }
+  }, THEME_KEYS.map(k => React.createElement("button", {
+    key: k,
+    className: "theme-swatch" + (theme === k ? " sel" : ""),
+    onClick: () => setTheme(k),
+    style: {
+      background: themeOf(k).css
+    }
+  }, React.createElement("span", null, themeOf(k).name)))), bgType === "image" && React.createElement("div", {
+    style: {
+      marginBottom: 14
+    }
+  }, React.createElement("input", {
+    ref: fileRef,
+    type: "file",
+    accept: "image/*",
+    style: {
+      display: "none"
+    },
+    onChange: pickImage
+  }), React.createElement("div", {
+    className: "img-drop",
+    style: bgImage ? {
+      backgroundImage: "url(" + bgImage + ")"
+    } : {},
+    onClick: () => fileRef.current && fileRef.current.click()
+  }, React.createElement("span", {
+    className: "hint"
+  }, bgImage ? "Tap to change image" : "Tap to choose an image")), React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: "var(--ash)",
+      margin: "8px 0 0"
+    }
+  }, "Shrunk and stored in your database — no billing needed.")), bgType === "video" && React.createElement("div", {
+    style: {
+      marginBottom: 6
+    }
+  }, React.createElement("label", {
+    className: "field",
+    style: {
+      marginBottom: 6
+    }
+  }, React.createElement("span", null, "Direct video link (.mp4)"), React.createElement("input", {
+    value: bgVideo,
+    onChange: e => setBgVideo(e.target.value),
+    placeholder: "https://…/clip.mp4"
+  })), React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: "var(--ash)",
+      margin: "0 0 8px"
+    }
+  }, "A direct link to a hosted .mp4. (In-app video upload needs the Blaze plan — add later.)")), 
+  
+  React.createElement("span", { className: "lbl-mini", style: { marginTop: 18 } }, "Unlock Requirements (Optional)"),
+  React.createElement("div", { className: "reward-row" },
+    React.createElement("span", { className: "spoil-tag", style: { width: 40, textAlign: 'left' } }, "Lvl"),
+    React.createElement("input", { type: "number", value: reqLevel, onChange: e => setReqLevel(e.target.value), placeholder: "0", style: { flex: 1 } }),
+    React.createElement("span", { className: "spoil-tag", style: { width: 40 } }, "XP"),
+    React.createElement("input", { type: "number", value: reqXp, onChange: e => setReqXp(e.target.value), placeholder: "0", style: { flex: 1 } })
+  ),
+  React.createElement("div", { className: "reward-row" },
+    React.createElement("span", { className: "spoil-tag", style: { width: 40, textAlign: 'left' } }, "Cost"),
+    React.createElement("input", { type: "number", value: reqVnd, onChange: e => setReqVnd(e.target.value), placeholder: "0", style: { flex: 1 } }),
+    React.createElement("button", { className: "unit" + (reqVndUnit === "k" ? " on" : ""), onClick: () => setReqVndUnit("k") }, "k"),
+    React.createElement("button", { className: "unit" + (reqVndUnit === "M" ? " on" : ""), onClick: () => setReqVndUnit("M") }, "M"),
+    React.createElement("span", { className: "vnd-big" }, "₫")
+  ),
+  React.createElement("div", { className: "reward-row" },
+    React.createElement("span", { className: "spoil-tag", style: { width: 40, textAlign: 'left' } }, "Cost"),
+    React.createElement("input", { type: "number", value: reqCrystals, onChange: e => setReqCrystals(e.target.value), placeholder: "0", style: { flex: 1 } }),
+    React.createElement("span", { className: "vnd-big", style: { color: '#bdf1ff', fontSize: 18 } }, "◆")
+  ),
+  React.createElement("p", { className: "ratio-note", style: { marginBottom: 16 } }, "Level/XP limit access. Cost (₫/◆) is paid upon unlock."),
+  
+  React.createElement("div", {
+    className: "err"
+  }, err), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: onClose
+  }, "Cancel"), React.createElement("button", {
+    className: "btn",
+    disabled: busy || !title.trim(),
+    onClick: save
+  }, busy ? "Saving…" : editing ? "Save" : "Forge"))));
+}
+
+function WorldOfConquest({
+  identity,
+  realmId,
+  realmData,
+  worlds,
+  enteredWorldIds,
+  activeWorldId,
+  onBack,
+  onEntered
+}) {
+  const isMaster = identity.role === "master";
+  const list = isMaster ? worlds : worlds.filter(w => w.state === "distributed");
+  const [editor, setEditor] = useState(null);
+  const [confirmDestroy, setConfirmDestroy] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const touchX = useRef(null);
+  useEffect(() => {
+    setIdx(i => Math.min(i, Math.max(0, list.length - 1)));
+  }, [list.length]);
+  useEffect(() => {
+    setConfirmDestroy(false);
+  }, [idx]);
+  
+  const go = d => setIdx(i => Math.max(0, Math.min(list.length - 1, i + d)));
+  const onTouchStart = e => {
+    touchX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = e => {
+    if (touchX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    touchX.current = null;
+  };
+  const enterWorld = async w => {
+    try {
+      await db.collection("realms").doc(realmId).update({
+        activeWorldId: w.id,
+        enteredWorldIds: firebase.firestore.FieldValue.arrayUnion(w.id)
+      });
+      onEntered();
+    } catch (e) {}
+  };
+  const distribute = async w => {
+    try {
+      await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({
+        state: "distributed"
+      });
+    } catch (e) {}
+  };
+  const requestUnlock = async (w) => {
+    try {
+      await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({
+        unlockRequested: true
+      });
+    } catch (e) {}
+  };
+  const approveUnlock = async (w) => {
+    const reqVndRaw = toRaw(w.reqVnd, w.reqVndUnit);
+    const reqCr = w.reqCrystals || 0;
+    try {
+      const batch = db.batch();
+      batch.update(db.collection("realms").doc(realmId).collection("worlds").doc(w.id), {
+        unlocked: true,
+        unlockRequested: false
+      });
+      if (reqVndRaw > 0 || reqCr > 0) {
+        batch.update(db.collection("realms").doc(realmId), {
+          slaveVND: firebase.firestore.FieldValue.increment(-reqVndRaw),
+          slaveCrystals: firebase.firestore.FieldValue.increment(-reqCr)
+        });
+      }
+      await batch.commit();
+    } catch (e) {}
+  };
+
+  const requestDestroy = async (w) => {
+      const entered = enteredWorldIds.includes(w.id);
+      if (w.state === "draft" || !entered) {
+          const batch = db.batch();
+          batch.delete(db.collection("realms").doc(realmId).collection("worlds").doc(w.id));
+          if (activeWorldId === w.id) {
+             batch.update(db.collection("realms").doc(realmId), { activeWorldId: null });
+          }
+          await batch.commit();
+          onBack(); 
+      } else {
+          await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({ destroyRequested: true });
+      }
+  };
+  const approveDestroy = async (w) => {
+      const batch = db.batch();
+      batch.delete(db.collection("realms").doc(realmId).collection("worlds").doc(w.id));
+      if (activeWorldId === w.id) {
+         batch.update(db.collection("realms").doc(realmId), { activeWorldId: null });
+      }
+      await batch.commit();
+      onBack();
+  };
+  const rejectDestroy = async (w) => {
+      await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).update({ destroyRequested: false });
+  };
+
+  const editorEl = editor && React.createElement(WorldEditor, {
+    realmId: realmId,
+    count: worlds.length,
+    world: editor.mode === "edit" ? editor.world : null,
+    onClose: () => setEditor(null)
+  });
+  if (list.length === 0) {
+    return React.createElement("div", {
+      className: "screen world-screen fadein"
+    }, React.createElement("div", {
+      className: "world-stage",
+      style: {
+        background: themeOf("ash").css
+      }
+    }), React.createElement("div", {
+      className: "world-vignette"
+    }), React.createElement("button", {
+      className: "back",
+      onClick: onBack
+    }, "‹"), React.createElement("div", {
+      className: "world-empty"
+    }, React.createElement("div", {
+      className: "big"
+    }, "🗺️"), isMaster ? React.createElement(React.Fragment, null, React.createElement("h2", {
+      className: "display"
+    }, "No worlds yet"), React.createElement("p", null, "Forge your first world — name it, give it a background, then distribute it to your conqueror."), React.createElement("button", {
+      className: "btn",
+      style: {
+        width: "min(360px,82vw)"
+      },
+      onClick: () => setEditor({
+        mode: "new"
+      })
+    }, "Forge a World")) : React.createElement(React.Fragment, null, React.createElement("h2", {
+      className: "display"
+    }, "The map is empty"), React.createElement("p", null, "Your master hasn't distributed any worlds yet. When they do, they'll appear here for you to enter."))), editorEl);
+  }
+  const w = list[idx];
+  if (!w) return null; 
+  
+  const entered = enteredWorldIds.includes(w.id);
+  const isActive = activeWorldId === w.id;
+  const distributed = w.state === "distributed";
+
+  const reqVndRaw = toRaw(w.reqVnd, w.reqVndUnit);
+  const hasReqs = (w.reqLevel || 0) > 0 || (w.reqXp || 0) > 0 || reqVndRaw > 0 || (w.reqCrystals || 0) > 0;
+  const isUnlocked = w.unlocked || !hasReqs;
+
+  const cState = isActive ? "✓ Your current world" : entered ? "Visited" : (!isUnlocked && distributed) ? "🔒 Sealed Realm" : "New Realm";
+
+  let primaryAction;
+  if (isMaster) {
+    if (w.destroyRequested) {
+        primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
+            React.createElement("div", { className: "req-box", style: { background: 'rgba(210,74,44,.15)', borderColor: 'rgba(210,74,44,.4)' } },
+                React.createElement("h4", {style: {color: 'var(--ember-glow)'}}, "Destruction Pending"),
+                React.createElement("p", { style: { fontSize: 13, margin: '0 0 10px', color: 'var(--bone)', textAlign: 'center' } }, "Waiting for Conqueror to approve the destruction.")
+            )
+        );
+    } else if (!isUnlocked && w.unlockRequested) {
+      primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
+        React.createElement("div", { className: "req-box", style: { background: 'rgba(217,178,74,.15)', borderColor: 'rgba(217,178,74,.4)' } },
+          React.createElement("h4", null, "Unlock Requested"),
+          React.createElement("p", { style: { fontSize: 13, margin: '0 0 10px', color: 'var(--bone)', textAlign: 'center' } }, "Conqueror meets requirements and wishes to enter."),
+          React.createElement("button", { className: "btn", style: { marginTop: 0 }, onClick: () => approveUnlock(w) }, "Approve & Deduct Cost")
+        ),
+        React.createElement("button", { className: "btn ghost", onClick: () => setEditor({ mode: "edit", world: w }) }, "Edit")
+      );
+    } else {
+      primaryAction = React.createElement("div", { className: "world-actions", style: { flexWrap: 'wrap', justifyContent: 'center' } },
+        React.createElement("button", { className: "btn ghost", style: {flex: 1, minWidth: '45%'}, onClick: () => setEditor({ mode: "edit", world: w }) }, "Edit"),
+        !distributed && React.createElement("button", { className: "btn", style: {flex: 1, minWidth: '45%'}, onClick: () => distribute(w) }, "Distribute"),
+        distributed && React.createElement("button", { className: "btn", style: { background: "transparent", border: "1px solid var(--jade)", color: "var(--jade)", boxShadow: "none", flex: 1, minWidth: '45%' }, disabled: true }, "Distributed ✓"),
+        
+        confirmDestroy ? React.createElement("div", { style: {width: '100%', display: 'flex', gap: 10, marginTop: 10} },
+            React.createElement("button", { className: "btn ghost", style: {flex: 1}, onClick: () => setConfirmDestroy(false) }, "Cancel"),
+            React.createElement("button", { className: "btn", style: {flex: 1, background: 'var(--ember)'}, onClick: () => { setConfirmDestroy(false); requestDestroy(w); } }, "Confirm Destroy")
+        ) : React.createElement("button", { className: "btn ghost", style: {width: '100%', marginTop: 10, color: 'var(--ember-glow)', borderColor: 'rgba(210,74,44,.4)'}, onClick: () => setConfirmDestroy(true) }, "Destroy World")
+      );
+    }
+  } else {
+    if (w.destroyRequested) {
+        primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
+           React.createElement("div", { className: "req-box", style: { background: 'rgba(210,74,44,.15)', borderColor: 'rgba(210,74,44,.4)' } },
+               React.createElement("h4", {style: {color: 'var(--ember-glow)'}}, "World Destruction"),
+               React.createElement("p", { style: { fontSize: 13, margin: '0 0 10px', color: 'var(--bone)', textAlign: 'center' } }, "The Master has decreed the destruction of this world."),
+               React.createElement("div", {style: {display: 'flex', gap: 10}},
+                   React.createElement("button", { className: "btn ghost", onClick: () => rejectDestroy(w) }, "Reject"),
+                   React.createElement("button", { className: "btn", style: {background: 'var(--ember)'}, onClick: () => approveDestroy(w) }, "Approve")
+               )
+           )
+       );
+    } else if (!isUnlocked && distributed) {
+      const slaveLvl = realmData ? levelInfo(realmData.slaveXP || 0).level : 0;
+      const slaveXp = realmData ? realmData.slaveXP || 0 : 0;
+      const slaveVnd = realmData ? realmData.slaveVND || 0 : 0;
+      const slaveCr = realmData ? realmData.slaveCrystals || 0 : 0;
+      
+      const meetsLevel = slaveLvl >= (w.reqLevel || 0);
+      const meetsXp = slaveXp >= (w.reqXp || 0);
+      const meetsVnd = slaveVnd >= reqVndRaw;
+      const meetsCr = slaveCr >= (w.reqCrystals || 0);
+      const canReq = meetsLevel && meetsXp && meetsVnd && meetsCr;
+
+      primaryAction = React.createElement("div", { className: "world-actions", style: { flexDirection: 'column' } },
+        React.createElement("div", { className: "req-box" },
+          React.createElement("h4", null, "Sealed Realm"),
+          (w.reqLevel > 0) && React.createElement("div", { className: "req-row " + (meetsLevel ? "pass" : "fail") }, React.createElement("span", null, "Level Required"), React.createElement("span", null, w.reqLevel)),
+          (w.reqXp > 0) && React.createElement("div", { className: "req-row " + (meetsXp ? "pass" : "fail") }, React.createElement("span", null, "XP Required"), React.createElement("span", null, w.reqXp)),
+          (reqVndRaw > 0) && React.createElement("div", { className: "req-row " + (meetsVnd ? "pass" : "fail") }, React.createElement("span", null, "Entry Cost (₫)"), React.createElement("span", null, fmtVND(reqVndRaw))),
+          (w.reqCrystals > 0) && React.createElement("div", { className: "req-row " + (meetsCr ? "pass" : "fail") }, React.createElement("span", null, "Entry Cost (◆)"), React.createElement("span", null, w.reqCrystals))
+        ),
+        w.unlockRequested
+          ? React.createElement("button", { className: "btn", disabled: true }, "Awaiting Master...")
+          : React.createElement("button", { className: "btn " + (canReq ? "" : "ghost"), disabled: !canReq, onClick: () => requestUnlock(w) }, canReq ? "Request Unlock" : "Requirements not met")
+      );
+    } else if (distributed) {
+      primaryAction = React.createElement("button", { className: "btn world-cta", onClick: () => enterWorld(w) }, isActive ? "Continue" : entered ? "Re-enter this world" : "Enter this world");
+    }
+  }
+
+  return React.createElement("div", {
+    className: "screen world-screen fadein",
+    onTouchStart: onTouchStart,
+    onTouchEnd: onTouchEnd
+  }, React.createElement(WorldStage, {
+    w: w
+  }), React.createElement("div", {
+    className: "world-vignette"
+  }), React.createElement("button", {
+    className: "back",
+    onClick: onBack
+  }, "‹"), React.createElement("div", {
+    className: "world-top"
+  }, React.createElement("span", {
+    className: "ttl"
+  }, "World of Conquest")), React.createElement("button", {
+    className: "car-arrow l" + (idx === 0 ? " hidden" : ""),
+    onClick: () => go(-1)
+  }, "‹"), React.createElement("button", {
+    className: "car-arrow r" + (idx === list.length - 1 ? " hidden" : ""),
+    onClick: () => go(1)
+  }, "›"), React.createElement("div", {
+    className: "world-body"
+  }, React.createElement("h1", {
+    className: "world-name"
+  }, w.title), React.createElement("div", {
+    className: "world-state " + (isMaster && distributed ? "active" : isMaster ? "locked" : isActive ? "active" : (!isUnlocked && distributed) ? "locked" : "")
+  }, isMaster ? (distributed ? "✓ Distributed" : "Draft — not sent yet") : cState), primaryAction), list.length > 1 && React.createElement("div", {
+    className: "car-dots"
+  }, list.map((_, i) => React.createElement("i", {
+    key: i,
+    className: i === idx ? "on" : ""
+  }))), isMaster && React.createElement("button", {
+    className: "fab",
+    onClick: () => setEditor({
+      mode: "new"
+    })
+  }, "＋ Forge"), editorEl);
+}
+
+const fmtReward = r => r ? r.amount + (r.unit || "") : "";
+const mref = (realmId, worldId, id) => db.collection("realms").doc(realmId).collection("worlds").doc(worldId).collection("missions").doc(id);
+const VERDICTS = ["win", "lose", "winPlus", "losePlus"];
+const VERDICT_LABEL = {
+  win: "WIN",
+  lose: "LOSE",
+  winPlus: "WIN PLUS",
+  losePlus: "LOSE PLUS"
+};
+const verdictImg = (m, v) => m && m.verdict ? m.verdict[v + "Image"] || "" : "";
+const isWinClass = v => v === "win" || v === "winPlus";
+
+// ---- economy helpers ----
+// {amount, unit} -> raw VND number (k = x1000, M = x1,000,000)
+const toRaw = (amount, unit) => {
+  const n = Number(amount) || 0;
+  return unit === "M" ? n * 1000000 : unit === "k" ? n * 1000 : n;
+};
+// raw VND -> compact label (50000 -> "50k", 1500000 -> "1.5M")
+function fmtVND(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000) {
+    const v = n / 1000000;
+    return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + "M";
+  }
+  if (n >= 1000) {
+    const v = n / 1000;
+    return (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + "k";
+  }
+  return String(n);
+}
+// XP needed to advance FROM this level to the next (level 1->2 = 100, 2->3 = 200…)
+const xpToNext = level => level * 100;
+// total XP -> { level, inLevel, need, pct } (level starts at 1)
+function levelInfo(totalXP) {
+  let level = 1, rem = Number(totalXP) || 0;
+  while (rem >= xpToNext(level)) { rem -= xpToNext(level); level++; }
+  const need = xpToNext(level);
+  return { level, inLevel: rem, need, pct: Math.max(0, Math.min(100, Math.round(rem / need * 100))) };
+}
+function rewardView(r, v) {
+  if (!r) return {
+    main: "—"
+  };
+  const base = r.amount + (r.unit || "");
+  if (v === "win") return {
+    main: base
+  };
+  if (v === "winPlus") return {
+    main: base,
+    plus: r.plusAmount ? "+" + r.plusAmount + (r.plusUnit || "") : null
+  };
+  if (v === "losePlus") return {
+    main: r.loseAmount ? r.loseAmount + (r.loseUnit || "") : "0"
+  };
+  return {
+    main: "—"
+  };
+}
+function earnedView(m) {
+  const r = m.reward || {};
+  if (m.state === "approved") return m.slaveVerdict === "winPlus" ? r.amount + (r.unit || "") + (r.plusAmount ? " +" + r.plusAmount + (r.plusUnit || "") : "") : r.amount + (r.unit || "");
+  if (m.state === "consoled") return r.loseAmount ? r.loseAmount + (r.loseUnit || "") : "0";
+  return "";
+}
+function penaltyView(r) {
+  if (!r) return "";
+  const parts = [];
+  if (r.penaltyAmount) parts.push(r.penaltyAmount + (r.penaltyUnit || "") + " ₫");
+  if (r.penaltyXp) parts.push(r.penaltyXp + " XP");
+  if (r.penaltyCrystals) parts.push(r.penaltyCrystals + " ◆");
+  return parts.length ? "− " + parts.join("  ·  ") : "";
+}
+function verdictStake(r, verdict) {
+  r = r || {};
+  if (verdict === "lose") return penaltyView(r) || "—";
+  
+  const parts = [];
+  if (verdict === "winPlus") {
+      let vndStr = (r.amount || 0) + (r.unit || "");
+      if (r.plusAmount) vndStr += " + " + r.plusAmount + (r.plusUnit || "");
+      parts.push(vndStr + " ₫");
+      
+      if ((r.xp || 0) > 0 || (r.plusXp || 0) > 0) {
+          let xpStr = (r.xp || 0);
+          if (r.plusXp) xpStr += " + " + r.plusXp;
+          parts.push(xpStr + " XP");
+      }
+      if ((r.crystals || 0) > 0 || (r.plusCrystals || 0) > 0) {
+          let crStr = (r.crystals || 0);
+          if (r.plusCrystals) crStr += " + " + r.plusCrystals;
+          parts.push(crStr + " ◆");
+      }
+  } else if (verdict === "losePlus") {
+      let vndStr = (r.loseAmount || 0) + (r.loseUnit || "");
+      parts.push(vndStr + " ₫");
+      if (r.loseXp) parts.push(r.loseXp + " XP");
+      if (r.loseCrystals) parts.push(r.loseCrystals + " ◆");
+  } else {
+      let vndStr = (r.amount || 0) + (r.unit || "");
+      parts.push(vndStr + " ₫");
+      if (r.xp) parts.push(r.xp + " XP");
+      if (r.crystals) parts.push(r.crystals + " ◆");
+  }
+  return parts.join("  ·  ");
+}
+
+function StakeList({ r }) {
+  const rows = [{ k: "win", label: "WIN" }, { k: "winPlus", label: "WIN PLUS" }, { k: "lose", label: "LOSE" }, { k: "losePlus", label: "LOSE PLUS" }];
+  return React.createElement("div", { className: "task-stakes" },
+    rows.map(row => React.createElement("div", { key: row.k, className: "task-stake-row " + (isWinClass(row.k) ? "win" : "lose") },
+      React.createElement("span", { className: "lbl" }, row.label),
+      React.createElement("span", { className: "val" }, verdictStake(r, row.k)))));
+}
+function Fireworks({
+  onDone
+}) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const cv = ref.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
+    let W = cv.width = window.innerWidth,
+      H = cv.height = window.innerHeight;
+    const onR = () => {
+      W = cv.width = window.innerWidth;
+      H = cv.height = window.innerHeight;
+    };
+    window.addEventListener("resize", onR);
+    let parts = [],
+      raf,
+      last = 0;
+    const start = performance.now(),
+      DUR = 2600;
+    const colors = ["#ff6a3d", "#d9b24a", "#46b87a", "#ffd27a", "#ff4d4d", "#7ad0ff"];
+    const burst = (x, y) => {
+      const n = 40 + (Math.random() * 22 | 0);
+      for (let i = 0; i < n; i++) {
+        const a = Math.PI * 2 * i / n,
+          sp = 2 + Math.random() * 4.2;
+        parts.push({
+          x,
+          y,
+          vx: Math.cos(a) * sp,
+          vy: Math.sin(a) * sp,
+          life: 1,
+          c: colors[Math.random() * colors.length | 0]
+        });
+      }
+    };
+    const frame = t => {
+      const el = t - start;
+      if (el < 1800 && t - last > 300) {
+        last = t;
+        burst(W * (0.18 + Math.random() * 0.64), H * (0.18 + Math.random() * 0.42));
+      }
+      ctx.clearRect(0, 0, W, H);
+      parts.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.045;
+        p.vx *= 0.99;
+        p.life -= 0.012;
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.c;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, 7);
+        ctx.fill();
+      });
+      parts = parts.filter(p => p.life > 0);
+      if (el < DUR) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        onDone && onDone();
+      }
+    };
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onR);
+    };
+  }, []);
+  return React.createElement("canvas", {
+    ref: ref,
+    style: {
+      position: "fixed",
+      inset: 0,
+      zIndex: 60,
+      pointerEvents: "none"
+    }
+  });
+}
+
+function TaskPopup({
+  mission,
+  onClose
+}) {
+  const t = mission && mission.task || {};
+  const hasImg = t.bgType === "image" && t.bgImage;
+  const modalStyle = hasImg ? { background: "#000" } : { background: themeOf(t.theme).css };
+  const pen = penaltyView(mission && mission.reward);
+  return React.createElement("div", {
+    className: "modal-bg",
+    onClick: onClose
+  }, React.createElement("div", {
+    className: "modal big-modal",
+    onClick: e => e.stopPropagation(),
+    style: modalStyle
+  }, hasImg && React.createElement("img", {
+    className: "popup-bg",
+    src: t.bgImage,
+    alt: ""
+  }), React.createElement("div", {
+    className: "task-scrim"
+  }, React.createElement("h3", {
+    style: {
+      textAlign: "center"
+    }
+  }, "The Task"), React.createElement("p", {
+    className: "task-text"
+  }, t.text || "(no details)"), React.createElement(StakeList, {
+    r: mission && mission.reward
+  }), React.createElement("button", {
+    className: "btn",
+    onClick: onClose
+  }, "OK"))));
+}
+function InvitePopup({
+  mission,
+  onAccept,
+  onDecline
+}) {
+  const t = mission && mission.task || {};
+  const hasImg = t.bgType === "image" && t.bgImage;
+  const modalStyle = hasImg ? { background: "#000" } : { background: themeOf(t.theme).css };
+  const pen = penaltyView(mission && mission.reward);
+  return React.createElement("div", {
+    className: "modal-bg",
+    onClick: onDecline
+  }, React.createElement("div", {
+    className: "modal invite-modal",
+    onClick: e => e.stopPropagation(),
+    style: modalStyle
+  }, hasImg && React.createElement("img", {
+    className: "popup-bg",
+    src: t.bgImage,
+    alt: ""
+  }), React.createElement("div", {
+    className: "task-scrim"
+  }, React.createElement("h3", {
+    style: {
+      textAlign: "center"
+    }
+  }, "A New Mission"), React.createElement("p", {
+    className: "task-text"
+  }, t.text || "(no details)"), React.createElement(StakeList, {
+    r: mission && mission.reward
+  }), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: onDecline
+  }, "No, thanks"), React.createElement("button", {
+    className: "btn",
+    onClick: onAccept
+  }, "Let's go!")))));
+}
+function VImgPick({
+  label,
+  cls,
+  value,
+  onPick,
+  onClear
+}) {
+  const ref = useRef(null);
+  return React.createElement("div", null, React.createElement("input", {
+    ref: ref,
+    type: "file",
+    accept: "image/*",
+    style: {
+      display: "none"
+    },
+    onChange: onPick
+  }), React.createElement("div", {
+    className: "vimg " + cls,
+    onClick: () => ref.current && ref.current.click()
+  }, value && React.createElement("img", {
+    src: value,
+    className: "vimg-img",
+    alt: label
+  }), value && onClear && React.createElement("button", {
+    className: "vimg-clear",
+    onClick: e => {
+      e.stopPropagation();
+      onClear();
+    }
+  }, "×"), React.createElement("span", {
+    className: "vimg-lbl"
+  }, label)));
+}
+
+function SpoilRow({
+  xp,
+  setXp,
+  crystals,
+  setCrystals
+}) {
+  return React.createElement("div", {
+    className: "reward-row",
+    style: {
+      marginTop: 6
+    }
+  }, React.createElement("span", {
+    className: "spoil-tag"
+  }, "XP"), React.createElement("input", {
+    type: "number",
+    value: xp,
+    onChange: e => setXp(e.target.value),
+    placeholder: "0",
+    style: {
+      flex: 1
+    }
+  }), React.createElement("span", {
+    className: "spoil-tag"
+  }, "◆"), React.createElement("input", {
+    type: "number",
+    value: crystals,
+    onChange: e => setCrystals(e.target.value),
+    placeholder: "0",
+    style: {
+      flex: 1
+    }
+  }));
+}
+
+function MissionEditor({
+  realmId,
+  worldId,
+  count,
+  onClose
+}) {
+  const D = loadTaskDefaults();
+  const [text, setText] = useState("");
+  const [name, setName] = useState("");
+  const [taskBgType, setTaskBgType] = useState(D.taskBgType || "preset");
+  const [taskTheme, setTaskTheme] = useState(D.taskTheme || THEME_KEYS[0]);
+  const [taskImg, setTaskImg] = useState(D.taskImg || "");
+  const [imgs, setImgs] = useState({
+    win: D.win || "",
+    lose: D.lose || "",
+    winPlus: D.winPlus || "",
+    losePlus: D.losePlus || ""
+  });
+  const [amount, setAmount] = useState("");
+  const [unit, setUnit] = useState("k");
+  const [plusAmt, setPlusAmt] = useState("");
+  const [plusUnit, setPlusUnit] = useState("k");
+  const [loseAmt, setLoseAmt] = useState("");
+  const [loseUnit, setLoseUnit] = useState("k");
+  const [xp, setXp] = useState("");
+  const [crystals, setCrystals] = useState("");
+  const [plusXp, setPlusXp] = useState("");
+  const [plusCrystals, setPlusCrystals] = useState("");
+  const [loseXp, setLoseXp] = useState("");
+  const [loseCrystals, setLoseCrystals] = useState("");
+  const [penaltyAmt, setPenaltyAmt] = useState("");
+  const [penaltyUnit, setPenaltyUnit] = useState("k");
+  const [penaltyXp, setPenaltyXp] = useState("");
+  const [penaltyCrystals, setPenaltyCrystals] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const taskFile = useRef(null);
+  const compress = async f => {
+    const d = await compressImage(f, 760, 0.66);
+    if (d.length > 260000) throw new Error("big");
+    return d;
+  };
+  const pickTask = async e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try {
+      setTaskImg(await compress(f));
+      setErr("");
+    } catch (_) {
+      setErr("That image is too large — pick a smaller one.");
+    }
+  };
+  const pickV = key => async e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try {
+      const d = await compress(f);
+      setImgs(s => ({
+        ...s,
+        [key]: d
+      }));
+      setErr("");
+    } catch (_) {
+      setErr("That image is too large — pick a smaller one.");
+    }
+  };
+  const ready = async () => {
+    if (!text.trim()) {
+      setErr("Write the task first.");
+      return;
+    }
+    if (amount === "" || isNaN(+amount) || +amount <= 0) {
+      setErr("Set the win reward.");
+      return;
+    }
+    setBusy(true);
+    const mission = {
+      order: count,
+      state: "ready",
+      slaveVerdict: null,
+      task: {
+        text: text.trim(),
+        name: name.trim(),
+        bgType: taskBgType,
+        theme: taskTheme,
+        bgImage: taskBgType === "image" ? taskImg : ""
+      },
+      verdict: {
+        winImage: imgs.win,
+        loseImage: imgs.lose,
+        winPlusImage: imgs.winPlus,
+        losePlusImage: imgs.losePlus
+      },
+      reward: {
+        amount: +amount,
+        unit,
+        plusAmount: plusAmt !== "" && !isNaN(+plusAmt) ? +plusAmt : 0,
+        plusUnit,
+        loseAmount: loseAmt !== "" && !isNaN(+loseAmt) ? +loseAmt : 0,
+        loseUnit,
+        xp: xp !== "" && !isNaN(+xp) ? Math.max(0, Math.floor(+xp)) : 0,
+        crystals: crystals !== "" && !isNaN(+crystals) ? Math.max(0, Math.floor(+crystals)) : 0,
+        plusXp: plusXp !== "" && !isNaN(+plusXp) ? Math.max(0, Math.floor(+plusXp)) : 0,
+        plusCrystals: plusCrystals !== "" && !isNaN(+plusCrystals) ? Math.max(0, Math.floor(+plusCrystals)) : 0,
+        loseXp: loseXp !== "" && !isNaN(+loseXp) ? Math.max(0, Math.floor(+loseXp)) : 0,
+        loseCrystals: loseCrystals !== "" && !isNaN(+loseCrystals) ? Math.max(0, Math.floor(+loseCrystals)) : 0,
+        penaltyAmount: penaltyAmt !== "" && !isNaN(+penaltyAmt) ? Math.max(0, +penaltyAmt) : 0,
+        penaltyUnit,
+        penaltyXp: penaltyXp !== "" && !isNaN(+penaltyXp) ? Math.max(0, Math.floor(+penaltyXp)) : 0,
+        penaltyCrystals: penaltyCrystals !== "" && !isNaN(+penaltyCrystals) ? Math.max(0, Math.floor(+penaltyCrystals)) : 0
+      },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (JSON.stringify(mission).length > 950000) {
+      setErr("Too much image data — use fewer or smaller pictures.");
+      setBusy(false);
+      return;
+    }
+    try {
+      await db.collection("realms").doc(realmId).collection("worlds").doc(worldId).collection("missions").add(mission);
+      saveTaskDefaults({
+        taskBgType,
+        taskTheme,
+        taskImg: taskBgType === "image" ? taskImg : "",
+        win: imgs.win,
+        lose: imgs.lose,
+        winPlus: imgs.winPlus,
+        losePlus: imgs.losePlus
+      });
+      onClose();
+    } catch (e) {
+      setErr("Couldn't send. Check connection.");
+      setBusy(false);
+    }
+  };
+  return React.createElement("div", {
+    className: "modal-bg",
+    onClick: onClose
+  }, React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation(),
+    style: {
+      maxWidth: 470,
+      textAlign: "left",
+      maxHeight: "88vh",
+      overflowY: "auto"
+    }
+  }, React.createElement("h3", {
+    style: {
+      textAlign: "center"
+    }
+  }, "New Mission"), React.createElement("label", {
+    className: "field"
+  }, React.createElement("span", null, "Mission name ", React.createElement("em", {
+    className: "ratio"
+  }, "shown on top of the bar")), React.createElement("input", {
+    value: name,
+    onChange: e => setName(e.target.value),
+    placeholder: "e.g. Angel's Call"
+  })), React.createElement("label", {
+    className: "field"
+  }, React.createElement("span", null, "The task"), React.createElement("textarea", {
+    value: text,
+    onChange: e => setText(e.target.value),
+    placeholder: "What must be done…",
+    rows: 3,
+    style: {
+      width: "100%",
+      minHeight: 82,
+      padding: "12px 15px",
+      borderRadius: 11,
+      background: "#0d0e12",
+      border: "1px solid var(--line)",
+      color: "var(--bone)",
+      fontFamily: "'Spectral'",
+      fontSize: 15,
+      resize: "vertical",
+      outline: "none"
+    }
+  })), React.createElement("span", {
+    className: "lbl-mini"
+  }, "Task background ", React.createElement("em", {
+    className: "ratio"
+  }, "portrait fits best · ≈ 3:4")), React.createElement("div", {
+    className: "bgtype-tabs"
+  }, React.createElement("button", {
+    className: taskBgType === "preset" ? "on" : "",
+    onClick: () => setTaskBgType("preset")
+  }, "Preset"), React.createElement("button", {
+    className: taskBgType === "image" ? "on" : "",
+    onClick: () => setTaskBgType("image")
+  }, "Image")), taskBgType === "preset" && React.createElement("div", {
+    className: "theme-grid",
+    style: {
+      marginBottom: 16
+    }
+  }, THEME_KEYS.map(k => React.createElement("button", {
+    key: k,
+    className: "theme-swatch" + (taskTheme === k ? " sel" : ""),
+    onClick: () => setTaskTheme(k),
+    style: {
+      background: themeOf(k).css
+    }
+  }, React.createElement("span", null, themeOf(k).name)))), taskBgType === "image" && React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, React.createElement("input", {
+    ref: taskFile,
+    type: "file",
+    accept: "image/*",
+    style: {
+      display: "none"
+    },
+    onChange: pickTask
+  }), React.createElement("div", {
+    className: "img-drop tall",
+    style: taskImg ? {
+      backgroundImage: "url(" + taskImg + ")",
+      position: "relative"
+    } : {
+      position: "relative"
+    },
+    onClick: () => taskFile.current && taskFile.current.click()
+  }, taskImg && React.createElement("button", {
+    className: "vimg-clear",
+    onClick: e => {
+      e.stopPropagation();
+      setTaskImg("");
+    }
+  }, "×"), React.createElement("span", {
+    className: "hint"
+  }, taskImg ? "Change image" : "Choose image")), React.createElement("p", {
+    className: "ratio-note"
+  }, "Shown cropped to fill — keep the subject centred.")), React.createElement("span", {
+    className: "lbl-mini"
+  }, "Verdict pictures (optional) ", React.createElement("em", {
+    className: "ratio"
+  }, "landscape fits the bar · ≈ 16:9")), React.createElement("div", {
+    className: "vimg-grid"
+  }, React.createElement(VImgPick, {
+    label: "WIN",
+    cls: "win",
+    value: imgs.win,
+    onPick: pickV("win"),
+    onClear: () => setImgs(s => ({ ...s, win: "" }))
+  }), React.createElement(VImgPick, {
+    label: "LOSE",
+    cls: "lose",
+    value: imgs.lose,
+    onPick: pickV("lose"),
+    onClear: () => setImgs(s => ({ ...s, lose: "" }))
+  }), React.createElement(VImgPick, {
+    label: "WIN PLUS",
+    cls: "win",
+    value: imgs.winPlus,
+    onPick: pickV("winPlus"),
+    onClear: () => setImgs(s => ({ ...s, winPlus: "" }))
+  }), React.createElement(VImgPick, {
+    label: "LOSE PLUS",
+    cls: "lose",
+    value: imgs.losePlus,
+    onPick: pickV("losePlus"),
+    onClear: () => setImgs(s => ({ ...s, losePlus: "" }))
+  })), React.createElement("p", {
+    className: "ratio-note",
+    style: {
+      marginBottom: 14
+    }
+  }, "Each fills its slot in the mission bar, cropped to fit."), React.createElement("span", {
+    className: "lbl-mini"
+  }, "Win reward"), React.createElement("div", {
+    className: "reward-row"
+  }, React.createElement("input", {
+    type: "number",
+    value: amount,
+    onChange: e => setAmount(e.target.value),
+    placeholder: "50",
+    style: {
+      flex: 1
+    }
+  }), React.createElement("button", {
+    className: "unit" + (unit === "k" ? " on" : ""),
+    onClick: () => setUnit("k")
+  }, "k"), React.createElement("button", {
+    className: "unit" + (unit === "M" ? " on" : ""),
+    onClick: () => setUnit("M")
+  }, "M"), React.createElement("span", {
+    className: "vnd-big"
+  }, "₫")), React.createElement(SpoilRow, {
+    xp: xp,
+    setXp: setXp,
+    crystals: crystals,
+    setCrystals: setCrystals
+  }), React.createElement("span", {
+    className: "lbl-mini",
+    style: {
+      marginTop: 14
+    }
+  }, "Win Plus bonus ", React.createElement("em", {
+    className: "ratio"
+  }, "added on top of the win reward")), React.createElement("div", {
+    className: "reward-row"
+  }, React.createElement("input", {
+    type: "number",
+    value: plusAmt,
+    onChange: e => setPlusAmt(e.target.value),
+    placeholder: "20",
+    style: {
+      flex: 1
+    }
+  }), React.createElement("button", {
+    className: "unit" + (plusUnit === "k" ? " on" : ""),
+    onClick: () => setPlusUnit("k")
+  }, "k"), React.createElement("button", {
+    className: "unit" + (plusUnit === "M" ? " on" : ""),
+    onClick: () => setPlusUnit("M")
+  }, "M"), React.createElement("span", {
+    className: "vnd-big"
+  }, "₫")), React.createElement(SpoilRow, {
+    xp: plusXp,
+    setXp: setPlusXp,
+    crystals: plusCrystals,
+    setCrystals: setPlusCrystals
+  }), React.createElement("span", {
+    className: "lbl-mini",
+    style: {
+      marginTop: 14
+    }
+  }, "Lose Plus reward ", React.createElement("em", {
+    className: "ratio"
+  }, "the only amount paid on Lose Plus")), React.createElement("div", {
+    className: "reward-row"
+  }, React.createElement("input", {
+    type: "number",
+    value: loseAmt,
+    onChange: e => setLoseAmt(e.target.value),
+    placeholder: "10",
+    style: {
+      flex: 1
+    }
+  }), React.createElement("button", {
+    className: "unit" + (loseUnit === "k" ? " on" : ""),
+    onClick: () => setLoseUnit("k")
+  }, "k"), React.createElement("button", {
+    className: "unit" + (loseUnit === "M" ? " on" : ""),
+    onClick: () => setLoseUnit("M")
+  }, "M"), React.createElement("span", {
+    className: "vnd-big"
+  }, "₫")), React.createElement(SpoilRow, {
+    xp: loseXp,
+    setXp: setLoseXp,
+    crystals: loseCrystals,
+    setCrystals: setLoseCrystals
+  }), React.createElement("span", {
+    className: "lbl-mini",
+    style: {
+      marginTop: 14
+    }
+  }, "Lose penalty ", React.createElement("em", {
+    className: "ratio"
+  }, "taken on a plain Lose — leave 0 for none")), React.createElement("div", {
+    className: "reward-row"
+  }, React.createElement("input", {
+    type: "number",
+    value: penaltyAmt,
+    onChange: e => setPenaltyAmt(e.target.value),
+    placeholder: "0",
+    style: {
+      flex: 1
+    }
+  }), React.createElement("button", {
+    className: "unit" + (penaltyUnit === "k" ? " on" : ""),
+    onClick: () => setPenaltyUnit("k")
+  }, "k"), React.createElement("button", {
+    className: "unit" + (penaltyUnit === "M" ? " on" : ""),
+    onClick: () => setPenaltyUnit("M")
+  }, "M"), React.createElement("span", {
+    className: "vnd-big"
+  }, "₫")), React.createElement(SpoilRow, {
+    xp: penaltyXp,
+    setXp: setPenaltyXp,
+    crystals: penaltyCrystals,
+    setCrystals: setPenaltyCrystals
+  }), React.createElement("div", {
+    className: "err"
+  }, err), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: onClose
+  }, "Cancel"), React.createElement("button", {
+    className: "btn",
+    disabled: busy,
+    onClick: ready
+  }, busy ? "Sending…" : "Task is ready"))));
+}
+
+function ConquerorMission({
+  realmId,
+  worldId,
+  m
+}) {
+  const [vi, setVi] = useState(0);
+  const verdict = VERDICTS[vi];
+  const [invite, setInvite] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [shatter, setShatter] = useState(false);
+  const [losePlus, setLosePlus] = useState(false);
+  const [loseConfirm, setLoseConfirm] = useState(false);
+  const [fx, setFx] = useState(false);
+  const touchX = useRef(null);
+  const wasApproved = useRef(m.state === "approved");
+  const doc = () => mref(realmId, worldId, m.id);
+  useEffect(() => {
+    if (m.state === "approved" && !wasApproved.current && m.slaveVerdict === "winPlus") setFx(true);
+    wasApproved.current = m.state === "approved";
+  }, [m.state, m.slaveVerdict]);
+  const accept = async () => {
+    setInvite(false);
+    try {
+      await doc().update({
+        state: "accepted"
+      });
+    } catch (_) {}
+  };
+  const reset = async () => {
+    setLosePlus(false);
+    setVi(0);
+  };
+  const consoled = async () => {
+    setLosePlus(false);
+    const inc = firebase.firestore.FieldValue.increment;
+    try {
+      const batch = db.batch();
+      batch.update(doc(), { state: "submitted", slaveVerdict: "losePlus" });
+      batch.update(db.collection("realms").doc(realmId), { pendingApprovals: inc(1) });
+      await batch.commit();
+    } catch (_) {}
+  };
+  const doFail = () => {
+    setLoseConfirm(false);
+    setShatter(true);
+    const r = m.reward || {};
+    const penVnd = toRaw(r.penaltyAmount, r.penaltyUnit);
+    const penXp = r.penaltyXp || 0;
+    const penCr = r.penaltyCrystals || 0;
+    const has = penVnd > 0 || penXp > 0 || penCr > 0;
+    setTimeout(() => {
+      const realmRef = db.collection("realms").doc(realmId);
+      if (has) {
+        db.runTransaction(async tx => {
+          const snap = await tx.get(realmRef);
+          const d = (snap.exists && snap.data()) || {};
+          tx.update(realmRef, {
+            slaveVND: Math.max(0, (d.slaveVND || 0) - penVnd),
+            slaveXP: Math.max(0, (d.slaveXP || 0) - penXp),
+            slaveCrystals: Math.max(0, (d.slaveCrystals || 0) - penCr)
+          });
+          tx.update(doc(), { state: "failed", slaveVerdict: "lose" });
+        }).catch(() => {});
+      } else {
+        doc().update({ state: "failed", slaveVerdict: "lose" }).catch(() => {});
+      }
+    }, 660);
+  };
+  const submit = async () => {
+    if (verdict === "lose") {
+      const r = m.reward || {};
+      const has = toRaw(r.penaltyAmount, r.penaltyUnit) > 0 || (r.penaltyXp || 0) > 0 || (r.penaltyCrystals || 0) > 0;
+      if (has) { setLoseConfirm(true); return; }
+      doFail();
+    } else if (verdict === "losePlus") {
+      setLosePlus(true);
+    } else {
+      const wp = verdict === "winPlus";
+      if (wp) setFx(true);
+      const inc = firebase.firestore.FieldValue.increment;
+      try {
+        const batch = db.batch();
+        batch.update(doc(), { state: "submitted", slaveVerdict: wp ? "winPlus" : "win" });
+        batch.update(db.collection("realms").doc(realmId), { pendingApprovals: inc(1) });
+        await batch.commit();
+      } catch (_) {}
+    }
+  };
+  const step = d => setVi(i => (i + d + VERDICTS.length) % VERDICTS.length);
+  const swStart = e => {
+    touchX.current = e.touches[0].clientX;
+  };
+  const swEnd = e => {
+    if (touchX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
+    touchX.current = null;
+  };
+  const fxEl = fx && React.createElement(Fireworks, {
+    onDone: () => setFx(false)
+  });
+  const name = m.task && m.task.name;
+  const titleEl = name ? React.createElement("div", {
+    className: "m-title",
+    onClick: () => setTaskOpen(true)
+  }, "📜 ", name) : null;
+  const taskPopupEl = taskOpen && React.createElement(TaskPopup, {
+    mission: m,
+    onClose: () => setTaskOpen(false)
+  });
+  if (m.state === "ready") {
+    return React.createElement(React.Fragment, null, React.createElement("div", {
+      className: "m-wrap"
+    }, titleEl, React.createElement("div", {
+      className: "mission flash",
+      onClick: () => setInvite(true)
+    }, React.createElement("div", {
+      className: "m-locked"
+    }, "🗡️ New mission — tap to read"))), invite && React.createElement(InvitePopup, {
+      mission: m,
+      onAccept: accept,
+      onDecline: () => setInvite(false)
+    }), taskPopupEl);
+  }
+  if (m.state === "submitted") {
+    return React.createElement(React.Fragment, null, React.createElement("div", {
+      className: "m-wrap"
+    }, titleEl, React.createElement("div", {
+      className: "mission"
+    }, React.createElement("div", {
+      className: "m-locked"
+    }, "⏳ Awaiting the master's seal…"))), taskPopupEl, fxEl);
+  }
+  if (m.state === "approved" || m.state === "consoled") {
+    const isLoss = m.slaveVerdict === "losePlus";
+    return React.createElement(React.Fragment, null, React.createElement("div", {
+      className: "m-wrap"
+    }, titleEl, React.createElement("div", {
+      className: "mission " + (isLoss ? "" : "approved")
+    }, React.createElement("div", {
+      className: "m-locked " + (isLoss ? "" : "approved")
+    }, isLoss ? "🩹 Lose Plus — " : "✓ Approved — ", earnedView(m), " ₫ paid"))), taskPopupEl, fxEl);
+  }
+  const vImg = verdictImg(m, verdict);
+  const stakeCls = isWinClass(verdict) ? "win" : "lose";
+  return React.createElement(React.Fragment, null, React.createElement("div", {
+    className: "m-wrap"
+  }, titleEl, React.createElement("div", {
+    className: "mission" + (shatter ? " shatter" : "")
+  }, React.createElement("div", {
+    className: "m-part m-img " + stakeCls,
+    onTouchStart: swStart,
+    onTouchEnd: swEnd,
+    onClick: () => step(1)
+  }, vImg && React.createElement("img", {
+    src: vImg,
+    alt: ""
+  }), React.createElement("span", {
+    className: "m-img-count"
+  }, vi + 1, "/4 ›")), React.createElement("div", {
+    className: "m-part m-stake " + stakeCls,
+    onTouchStart: swStart,
+    onTouchEnd: swEnd,
+    onClick: () => step(1)
+  }, React.createElement("span", {
+    className: "m-stake-name"
+  }, VERDICT_LABEL[verdict]), React.createElement("span", {
+    className: "m-stake-val"
+  }, verdictStake(m.reward, verdict))), React.createElement("div", {
+    className: "m-part m-approve go",
+    onClick: submit,
+    title: "Submit"
+  }, "✓"))), taskPopupEl, losePlus && React.createElement("div", {
+    className: "modal-bg",
+    onClick: () => setLosePlus(false)
+  }, React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation()
+  }, React.createElement("h3", null, "A worthy effort"), React.createElement("p", null, "You claim ", React.createElement("b", {
+    style: {
+      color: "var(--gold)"
+    }
+  }, rewardView(m.reward, "losePlus").main, " ₫"), " for the attempt. Request the Master's seal to collect, or try again?"), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: consoled
+  }, "Send for Approval"), React.createElement("button", {
+    className: "btn",
+    onClick: reset
+  }, "Try again")))), loseConfirm && React.createElement("div", {
+    className: "modal-bg",
+    onClick: () => setLoseConfirm(false)
+  }, React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation()
+  }, React.createElement("h3", null, "Defeat"), React.createElement("p", null, "This loss will cost you ", React.createElement("b", {
+    style: {
+      color: "var(--ember-glow)"
+    }
+  }, penaltyView(m.reward)), ". Accept the defeat?"), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: () => setLoseConfirm(false)
+  }, "Back"), React.createElement("button", {
+    className: "btn",
+    onClick: doFail
+  }, "Accept defeat")))), fxEl);
+}
+function MasterMission({
+  realmId,
+  worldId,
+  m
+}) {
+  const doc = () => mref(realmId, worldId, m.id);
+  const [confirmForce, setConfirmForce] = useState(false);
+
+  const approve = async () => {
+    const r = m.reward || {};
+    const v = m.slaveVerdict;
+    let vnd = 0, gainXp = 0, gainCr = 0;
+    let finalState = "approved";
+    
+    if (v === "winPlus") {
+        vnd = toRaw(r.amount, r.unit) + toRaw(r.plusAmount, r.plusUnit);
+        gainXp = (r.xp || 0) + (r.plusXp || 0);
+        gainCr = (r.crystals || 0) + (r.plusCrystals || 0);
+    } else if (v === "win") {
+        vnd = toRaw(r.amount, r.unit);
+        gainXp = r.xp || 0;
+        gainCr = r.crystals || 0;
+    } else if (v === "losePlus") {
+        vnd = toRaw(r.loseAmount, r.loseUnit);
+        gainXp = r.loseXp || 0;
+        gainCr = r.loseCrystals || 0;
+        finalState = "consoled";
+    }
+
+    const inc = firebase.firestore.FieldValue.increment;
+    try {
+      const batch = db.batch();
+      batch.update(doc(), { state: finalState });
+      batch.update(db.collection("realms").doc(realmId), {
+        slaveVND: inc(vnd),
+        slaveXP: inc(gainXp),
+        slaveCrystals: inc(gainCr),
+        pendingApprovals: inc(-1)
+      });
+      await batch.commit();
+    } catch (_) {}
+  };
+  
+  const forceDefeat = async () => {
+      const r = m.reward || {};
+      const penVnd = toRaw(r.penaltyAmount, r.penaltyUnit);
+      const penXp = r.penaltyXp || 0;
+      const penCr = r.penaltyCrystals || 0;
+      try {
+        const batch = db.batch();
+        batch.update(doc(), { state: "failed", slaveVerdict: "lose" });
+        
+        const realmRef = db.collection("realms").doc(realmId);
+        db.runTransaction(async tx => {
+            const snap = await tx.get(realmRef);
+            const d = (snap.exists && snap.data()) || {};
+            tx.update(realmRef, {
+              slaveVND: Math.max(0, (d.slaveVND || 0) - penVnd),
+              slaveXP: Math.max(0, (d.slaveXP || 0) - penXp),
+              slaveCrystals: Math.max(0, (d.slaveCrystals || 0) - penCr)
+            });
+            tx.update(doc(), { state: "failed", slaveVerdict: "lose" });
+        }).catch(() => {});
+        
+        setConfirmForce(false);
+      } catch (e) {}
+  };
+
+  const sendBack = async () => {
+    const inc = firebase.firestore.FieldValue.increment;
+    try {
+      const batch = db.batch();
+      batch.update(doc(), { state: "accepted", slaveVerdict: null });
+      batch.update(db.collection("realms").doc(realmId), { pendingApprovals: inc(-1) });
+      await batch.commit();
+    } catch (_) {}
+  };
+  
+  const remove = async () => {
+    try {
+      await doc().delete();
+    } catch (_) {}
+  };
+  
+  const claim = m.slaveVerdict === "winPlus" ? "Claims a WIN PLUS" : m.slaveVerdict === "losePlus" ? "Claims LOSE PLUS" : "Claims a WIN";
+  const labels = {
+    ready: "Ready",
+    accepted: "Taken",
+    submitted: claim,
+    approved: "Approved",
+    failed: "Mission failed",
+    consoled: "Lose Plus · consoled"
+  };
+  const r = m.reward || {};
+  const spoils = (r.xp ? "  ·  " + r.xp + " XP" : "") + (r.crystals ? "  ·  " + r.crystals + " ◆" : "") + (penaltyView(r) ? "  ·  " + penaltyView(r) + " on Lose" : "");
+  const rewardLine = m.state === "approved" || m.state === "consoled" ? earnedView(m) + " ₫ paid" : r.amount + (r.unit || "") + " ₫" + (r.plusAmount ? "  (+" + r.plusAmount + (r.plusUnit || "") + " on Win Plus)" : "") + (r.loseAmount ? "  (" + r.loseAmount + (r.loseUnit || "") + " on Lose Plus)" : "") + spoils;
+  
+  return React.createElement("div", {
+    className: "m-master"
+  }, React.createElement("div", {
+    className: "top"
+  }, React.createElement("span", {
+    className: "mt"
+  }, m.task && m.task.name ? React.createElement("b", { style: { display: "block", fontFamily: "'Cinzel'", letterSpacing: ".04em", marginBottom: 3 } }, m.task.name) : null, m.task && m.task.text || "(task)"), React.createElement("span", {
+    className: "st " + m.state
+  }, labels[m.state] || m.state)), React.createElement("div", {
+    style: {
+      color: "var(--gold)",
+      fontFamily: "'Cinzel'",
+      fontWeight: 600,
+      fontSize: 13
+    }
+  }, rewardLine), React.createElement("div", {
+    className: "actions"
+  }, 
+    m.state === "accepted" && (
+      confirmForce ? React.createElement(React.Fragment, null,
+          React.createElement("button", { className: "btn ghost mini", onClick: () => setConfirmForce(false) }, "Cancel"),
+          React.createElement("button", { className: "btn mini", style: {background: 'var(--ember)'}, onClick: forceDefeat }, "Confirm")
+      ) : React.createElement(React.Fragment, null,
+          React.createElement("button", { className: "btn ghost mini", style: {color: 'var(--ember-glow)', borderColor: 'rgba(210,74,44,.4)'}, onClick: () => setConfirmForce(true) }, "Force Defeat"),
+          React.createElement("button", { className: "btn ghost mini", onClick: remove }, "Delete")
+      )
+    ),
+    m.state === "submitted" && React.createElement(React.Fragment, null, 
+      React.createElement("button", { className: "btn ghost mini", onClick: sendBack }, "Send back"), 
+      React.createElement("button", { className: "btn mini", onClick: approve }, "Approve ✓")
+    ),
+    (m.state === "ready" || m.state === "approved" || m.state === "failed" || m.state === "consoled") && React.createElement("button", { className: "btn ghost mini", onClick: remove }, "Delete")
+  ));
+}
+
+function MyCurrentLine({
+  identity,
+  realmId,
+  worlds,
+  activeWorldId,
+  onBack
+}) {
+  const isMaster = identity.role === "master";
+  const [selWorld, setSelWorld] = useState(activeWorldId || worlds[0] && worlds[0].id || null);
+  const worldId = isMaster ? selWorld : activeWorldId;
+  const world = worlds.find(w => w.id === worldId);
+  const [missions, setMissions] = useState([]);
+  const [creating, setCreating] = useState(false);
+  useEffect(() => {
+    if (isMaster && !selWorld && worlds.length) setSelWorld(activeWorldId || worlds[0].id);
+  }, [worlds.length]);
+  useEffect(() => {
+    if (!worldId || !db) {
+      setMissions([]);
+      return;
+    }
+    const unsub = db.collection("realms").doc(realmId).collection("worlds").doc(worldId).collection("missions").orderBy("order").onSnapshot(s => setMissions(s.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }))), () => {});
+    return unsub;
+  }, [worldId, realmId]);
+  const shown = isMaster ? missions : missions.filter(m => m.state !== "failed");
+  const stageStyle = world ? world.bgType === "image" && world.bgImage ? {
+    backgroundImage: "url(" + world.bgImage + ")",
+    backgroundSize: "cover",
+    backgroundPosition: "center"
+  } : {
+    background: themeOf(world.theme).css
+  } : {
+    background: themeOf("ash").css
+  };
+  return React.createElement("div", {
+    className: "screen line-screen fadein"
+  }, React.createElement("div", {
+    className: "world-stage",
+    style: stageStyle
+  }), React.createElement("div", {
+    className: "world-vignette"
+  }), React.createElement("button", {
+    className: "back",
+    onClick: onBack
+  }, "‹"), React.createElement("div", {
+    className: "line-head"
+  }, React.createElement("div", {
+    className: "ttl"
+  }, "My Current Line"), world && React.createElement("div", {
+    className: "line-world"
+  }, world.title)), React.createElement("div", {
+    className: "line-scroll"
+  }, isMaster && worlds.length > 0 && React.createElement("div", {
+    className: "world-pick"
+  }, worlds.map(w => React.createElement("button", {
+    key: w.id,
+    className: w.id === selWorld ? "on" : "",
+    onClick: () => setSelWorld(w.id)
+  }, w.title))), !worldId && React.createElement("div", {
+    style: {
+      textAlign: "center",
+      color: "var(--ash)",
+      marginTop: 50,
+      fontFamily: "'Spectral'",
+      lineHeight: 1.6
+    }
+  }, isMaster ? "Forge a world first, then add missions to it." : "Enter a world to see your line."), worldId && shown.length === 0 && React.createElement("div", {
+    style: {
+      textAlign: "center",
+      color: "var(--ash)",
+      marginTop: 40,
+      fontFamily: "'Spectral'",
+      lineHeight: 1.6
+    }
+  }, isMaster ? "No missions yet. Forge one below." : "No missions here yet — your master is preparing them."), shown.map(m => isMaster ? React.createElement(MasterMission, {
+    key: m.id,
+    realmId: realmId,
+    worldId: worldId,
+    m: m
+  }) : React.createElement(ConquerorMission, {
+    key: m.id,
+    realmId: realmId,
+    worldId: worldId,
+    m: m
+  }))), isMaster && worldId && React.createElement("button", {
+    className: "fab",
+    onClick: () => setCreating(true)
+  }, "＋ Mission"), creating && React.createElement(MissionEditor, {
+    realmId: realmId,
+    worldId: worldId,
+    count: missions.length,
+    onClose: () => setCreating(false)
+  }));
+}
+function Stub({
+  icon,
+  title,
+  text,
+  onBack
+}) {
+  return React.createElement("div", {
+    className: "screen stub fadein"
+  }, React.createElement("button", {
+    className: "back",
+    onClick: onBack
+  }, "‹"), React.createElement("div", {
+    className: "icon"
+  }, icon), React.createElement("h2", {
+    className: "display"
+  }, title), React.createElement("p", null, text));
+}
+
+function Options({
+  identity,
+  connected,
+  onBack,
+  onReset
+}) {
+  const [confirm, setConfirm] = useState(false);
+  const isSlave = identity.role === "slave";
+
+  return React.createElement("div", {
+    className: "screen panel fadein"
+  }, React.createElement("button", {
+    className: "back",
+    onClick: onBack
+  }, "‹"), React.createElement("div", {
+    className: "card"
+  }, React.createElement("h2", null, "Options"), 
+  React.createElement("div", {
+    className: "opt-row"
+  }, React.createElement("span", {
+    className: "k"
+  }, "Your seat"), React.createElement("span", {
+    className: "v"
+  }, identity.role === "master" ? "Master ⚔️" : "Conqueror 🛡️")), React.createElement("div", {
+    className: "opt-row"
+  }, React.createElement("span", {
+    className: "k"
+  }, "Master"), React.createElement("span", {
+    className: "v"
+  }, identity.masterName)), React.createElement("div", {
+    className: "opt-row"
+  }, React.createElement("span", {
+    className: "k"
+  }, "Conqueror"), React.createElement("span", {
+    className: "v"
+  }, identity.slaveName)), React.createElement("div", {
+    className: "opt-row"
+  }, React.createElement("span", {
+    className: "k"
+  }, "Realm code"), React.createElement("span", {
+    className: "v",
+    style: {
+      fontFamily: "'Cinzel'",
+      letterSpacing: ".15em",
+      color: "var(--gold)"
+    }
+  }, identity.realmId)), React.createElement("div", {
+    className: "opt-row"
+  }, React.createElement("span", {
+    className: "k"
+  }, "Link"), React.createElement("span", {
+    className: "v"
+  }, connected ? "Linked ✓" : "Offline")), 
+  
+  React.createElement("button", {
+    className: "btn ghost",
+    style: {
+      marginTop: 26,
+      borderColor: "rgba(210,74,44,.5)",
+      color: "var(--ember-glow)"
+    },
+    onClick: () => setConfirm(true)
+  }, "Leave realm / switch seat")), confirm && React.createElement("div", {
+    className: "modal-bg",
+    onClick: () => setConfirm(false)
+  }, React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation()
+  }, React.createElement("h3", null, "Leave this realm?"), React.createElement("p", null, "This device will be unlinked and return to setup. The realm and its worlds are not deleted — you can rejoin with the same code."), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: () => setConfirm(false)
+  }, "Stay"), React.createElement("button", {
+    className: "btn",
+    onClick: onReset
+  }, "Leave")))));
+}
+
+function Withdraw({
+  identity,
+  realmId,
+  realmData,
+  onBack
+}) {
+  const isMaster = identity.role === "master";
+  const pending = realmData && realmData.pendingWithdraw || null;
+  const vnd = realmData && realmData.slaveVND || 0;
+  const crystals = realmData && realmData.slaveCrystals || 0;
+  const [amt, setAmt] = useState("");
+  const [unit, setUnit] = useState("k");
+  const [cr, setCr] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const realmRef = () => db.collection("realms").doc(realmId);
+  const request = async () => {
+    setErr("");
+    const wantVnd = toRaw(amt, unit);
+    const wantCr = cr !== "" && !isNaN(+cr) ? Math.max(0, Math.floor(+cr)) : 0;
+    if (wantVnd <= 0 && wantCr <= 0) { setErr("Enter an amount to withdraw."); return; }
+    if (wantVnd > vnd) { setErr("That's more ₫ than you have."); return; }
+    if (wantCr > crystals) { setErr("That's more crystals than you have."); return; }
+    setBusy(true);
+    try {
+      await realmRef().update({ pendingWithdraw: { vnd: wantVnd, crystals: wantCr, at: Date.now() } });
+      setAmt(""); setCr("");
+    } catch (_) { setErr("Couldn't send. Check connection."); }
+    setBusy(false);
+  };
+  const cancelReq = async () => { try { await realmRef().update({ pendingWithdraw: null }); } catch (_) {} };
+  const confirm = async () => {
+    if (!pending) return;
+    try {
+      await db.runTransaction(async tx => {
+        const snap = await tx.get(realmRef());
+        const d = snap.data() || {};
+        tx.update(realmRef(), {
+          slaveVND: Math.max(0, (d.slaveVND || 0) - (pending.vnd || 0)),
+          slaveCrystals: Math.max(0, (d.slaveCrystals || 0) - (pending.crystals || 0)),
+          pendingWithdraw: null
+        });
+      });
+    } catch (_) {}
+  };
+  const pendingBox = React.createElement("div", {
+    className: "code-box",
+    style: { borderStyle: "solid", borderColor: "rgba(217,178,74,.5)" }
+  }, React.createElement("div", { className: "val", style: { fontSize: 32 } }, fmtVND(pending && pending.vnd || 0), " ₫"),
+    pending && pending.crystals ? React.createElement("div", { className: "lbl", style: { marginTop: 8, color: "#bdf1ff" } }, pending.crystals + " ◆ crystals") : null);
+  let body;
+  if (isMaster) {
+    body = pending
+      ? React.createElement(React.Fragment, null,
+          React.createElement("p", { className: "lead" }, "Your conqueror asks to cash out."),
+          pendingBox,
+          React.createElement("div", { className: "row" },
+            React.createElement("button", { className: "btn ghost", onClick: cancelReq }, "Reject"),
+            React.createElement("button", { className: "btn", onClick: confirm }, "Confirm")))
+      : React.createElement("p", { className: "lead" }, "No withdrawal requests right now. When your conqueror asks to cash out, it will appear here for you to confirm.");
+  } else {
+    body = pending
+      ? React.createElement(React.Fragment, null,
+          React.createElement("p", { className: "lead" }, "Your request is waiting for the master's seal."),
+          pendingBox,
+          React.createElement("button", { className: "btn ghost", onClick: cancelReq }, "Cancel request"))
+      : React.createElement(React.Fragment, null,
+          React.createElement("p", { className: "lead" }, "You hold ", fmtVND(vnd), " ₫ and ", crystals, " ◆. How much do you want to withdraw?"),
+          React.createElement("span", { className: "lbl-mini" }, "Amount of ₫"),
+          React.createElement("div", { className: "reward-row" },
+            React.createElement("input", { type: "number", value: amt, onChange: e => setAmt(e.target.value), placeholder: "0", style: { flex: 1 } }),
+            React.createElement("button", { className: "unit" + (unit === "k" ? " on" : ""), onClick: () => setUnit("k") }, "k"),
+            React.createElement("button", { className: "unit" + (unit === "M" ? " on" : ""), onClick: () => setUnit("M") }, "M"),
+            React.createElement("span", { className: "vnd-big" }, "₫")),
+          React.createElement("span", { className: "lbl-mini", style: { marginTop: 14 } }, "Crystals ◆"),
+          React.createElement("div", { className: "reward-row" },
+            React.createElement("input", { type: "number", value: cr, onChange: e => setCr(e.target.value), placeholder: "0", style: { flex: 1 } })),
+          React.createElement("div", { className: "err" }, err),
+          React.createElement("button", { className: "btn", disabled: busy, onClick: request }, busy ? "Sending…" : "Request withdrawal"));
+  }
+  return React.createElement("div", { className: "screen panel fadein" },
+    React.createElement("button", { className: "back", onClick: onBack }, "‹"),
+    React.createElement("div", { className: "card" }, React.createElement("h2", null, "Withdraw"), body));
+}
+
+function App() {
+  const [started, setStarted] = useState(false);
+  const [identity, setIdentity] = useState(loadIdentity());
+  const [screen, setScreen] = useState("welcome");
+  const [connected, setConnected] = useState(false);
+  const [realmData, setRealmData] = useState(null);
+  const [activeWorldId, setActiveWorldId] = useState(null);
+  const [enteredWorldIds, setEnteredWorldIds] = useState([]);
+  const [worlds, setWorlds] = useState([]);
+  const [quitting, setQuitting] = useState(false);
+  
+  useEffect(() => {
+    if (!identity || !db) return;
+    const ref = db.collection("realms").doc(identity.realmId);
+    const unsub = ref.onSnapshot(snap => {
+      setConnected(true);
+      setRealmData(snap.exists ? snap.data() : null);
+      setActiveWorldId(snap.exists ? snap.data().activeWorldId || null : null);
+      setEnteredWorldIds(snap.exists ? snap.data().enteredWorldIds || [] : []);
+    }, () => setConnected(false));
+    return unsub;
+  }, [identity]);
+  
+  useEffect(() => {
+    if (!identity || !db) return;
+    const unsub = db.collection("realms").doc(identity.realmId).collection("worlds").orderBy("order").onSnapshot(snap => setWorlds(snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }))), () => {});
+    return unsub;
+  }, [identity]);
+  
+  const onDone = id => {
+    saveIdentity(id);
+    setIdentity(id);
+    setScreen("welcome");
+  };
+  
+  const updateIdentity = newId => {
+    saveIdentity(newId);
+    setIdentity(newId);
+  };
+  
+  const reset = () => {
+    clearIdentity();
+    setIdentity(null);
+    setScreen("welcome");
+    setConnected(false);
+  };
+  
+  const doQuit = () => {
+    window.open('', '_self');
+    window.close();
+    setTimeout(() => setQuitting("manual"), 250);
+  };
+  
+  if (!started) {
+    return React.createElement(Splash, { onStart: () => setStarted(true), onQuit: doQuit });
+  }
+
+  if (!identity) return React.createElement(React.Fragment, null, React.createElement(Background, null), React.createElement("div", {
+    className: "scrim"
+  }), React.createElement(Onboard, {
+    onDone: onDone
+  }));
+  
+  const back = () => setScreen("welcome");
+  const appClass = identity.role === "slave" ? "app-slave" : "app-master";
+  
+  return React.createElement("div", { className: appClass, style: { height: "100%" } }, 
+    React.createElement(Background, null), 
+    React.createElement("div", { className: "scrim" }), 
+    
+    // HUD only appears for Conqueror
+    React.createElement(ConquerorHUD, { identity, connected, realmData }),
+    
+    screen === "welcome" && React.createElement(Welcome, {
+    identity: identity,
+    hasActiveWorld: !!activeWorldId,
+    connected: connected,
+    realmData: realmData,
+    go: setScreen,
+    onQuit: () => setQuitting(true)
+  }), screen === "withdraw" && React.createElement(Withdraw, {
+    identity: identity,
+    realmId: identity.realmId,
+    realmData: realmData,
+    onBack: back
+  }), screen === "world" && React.createElement(WorldOfConquest, {
+    identity: identity,
+    realmId: identity.realmId,
+    realmData: realmData,
+    worlds: worlds,
+    enteredWorldIds: enteredWorldIds,
+    activeWorldId: activeWorldId,
+    onBack: back,
+    onEntered: back
+  }), screen === "line" && React.createElement(MyCurrentLine, {
+    identity: identity,
+    realmId: identity.realmId,
+    worlds: worlds,
+    activeWorldId: activeWorldId,
+    onBack: back
+  }), screen === "archive" && React.createElement(Stub, {
+    icon: "🏛️",
+    title: "Archive",
+    text: "Conquered and fallen missions will be recorded here.",
+    onBack: back
+  }), screen === "options" && React.createElement(Options, {
+    identity: identity,
+    connected: connected,
+    onBack: back,
+    onReset: reset,
+    onUpdateIdentity: updateIdentity
+  }), quitting && React.createElement("div", {
+    className: "modal-bg",
+    onClick: () => setQuitting(false)
+  }, React.createElement("div", {
+    className: "modal",
+    onClick: e => e.stopPropagation()
+  }, quitting === "manual" ? React.createElement(React.Fragment, null, React.createElement("h3", null, "Close to quit"), React.createElement("p", null, "Your phone won't let a web app close itself. Swipe it away from recents, or press home."), React.createElement("button", {
+    className: "btn",
+    onClick: () => setQuitting(false)
+  }, "Stay")) : React.createElement(React.Fragment, null, React.createElement("h3", null, "Leave the realm?"), React.createElement("p", null, "Close the app for now. Your worlds and missions wait for your return."), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    className: "btn ghost",
+    onClick: () => setQuitting(false)
+  }, "Stay"), React.createElement("button", {
+    className: "btn",
+    onClick: doQuit
+  }, "Quit"))))));
+}
+try {
+  screen.orientation && screen.orientation.lock && screen.orientation.lock('portrait').catch(() => {});
+} catch (e) {}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App, null));
+</script>
+</body>
+</html>
