@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon.jpg">
 <title>Conquest</title>
 
-<link rel="manifest" href='data:application/manifest+json,{"name":"Conquest","short_name":"Conquest","display":"fullscreen","orientation":"portrait","background_color":"%230a0a0c","theme_color":"%230a0a0c","start_url":".","icons":[{"src":"icon.jpg","sizes":"192x192 512x512","type":"image/jpeg","purpose":"any maskable"}]}' />
+<link rel="manifest" href='data:application/manifest+json,{"name":"Conquest","short_name":"Conquest","display":"fullscreen","orientation":"portrait","background_color":"%230a0a0c","theme_color":"%230a0a0c","start_url":".","icons":[{"src":"icon.jpg","sizes":"192x192","type":"image/jpeg","purpose":"any maskable"},{"src":"icon.jpg","sizes":"512x512","type":"image/jpeg","purpose":"any maskable"}]}' />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -501,9 +501,10 @@ function Background() {
   }));
 }
 
-function Pill({ role, connected }) {
-  const cls = !CONFIGURED ? "off" : connected ? "on" : "off";
-  const label = !CONFIGURED ? "No realm" : connected ? "Linked" : "Offline";
+function Pill({ role, connected, peerConnected }) {
+  const isLinked = connected && peerConnected;
+  const cls = !CONFIGURED ? "off" : isLinked ? "on" : "off";
+  const label = !CONFIGURED ? "No realm" : (!connected ? "Connecting..." : (peerConnected ? "Linked" : "Peer Offline"));
   return React.createElement("div", { className: "pill" }, 
     React.createElement("span", { className: "role" }, role), 
     React.createElement("span", { className: "dot " + cls }), 
@@ -511,12 +512,14 @@ function Pill({ role, connected }) {
   );
 }
 
-function ConquerorHUD({ identity, connected, realmData }) {
+function ConquerorHUD({ identity, connected, peerConnected, realmData }) {
   if (!identity || identity.role !== "slave") return null;
 
   const li = levelInfo(realmData && realmData.slaveXP || 0);
   const vnd = fmtVND(realmData && realmData.slaveVND || 0);
   const crystals = realmData && realmData.slaveCrystals || 0;
+  
+  const isLinked = connected && peerConnected;
 
   return React.createElement("div", { className: "hud fadein" },
     React.createElement("div", { className: "hud-bg" },
@@ -551,9 +554,9 @@ function ConquerorHUD({ identity, connected, realmData }) {
             React.createElement("img", { src: "blue_cristals.jpg", className: "hs-icon", alt: "Crystals" })
           )
         ),
-        React.createElement("div", { className: "hud-conn-status " + (connected ? "on" : "off") },
+        React.createElement("div", { className: "hud-conn-status " + (isLinked ? "on" : "off") },
           React.createElement("span", { className: "dot" }),
-          React.createElement("span", null, connected ? "Linked" : "Offline")
+          React.createElement("span", null, !connected ? "Connecting" : peerConnected ? "Linked" : "Offline")
         )
       )
     )
@@ -743,6 +746,7 @@ function Welcome({
   identity,
   hasActiveWorld,
   connected,
+  peerConnected,
   realmData,
   go,
   onQuit
@@ -781,7 +785,8 @@ function Welcome({
     className: "screen welcome fadein"
   }, React.createElement(Pill, {
     role: identity.role === "master" ? "Master" : "Conqueror",
-    connected: connected
+    connected: connected,
+    peerConnected: peerConnected
   }), React.createElement("div", {
     className: "crest"
   }, React.createElement("div", {
@@ -1122,19 +1127,50 @@ function WorldOfConquest({
     const reqVndRaw = toRaw(w.reqVnd, w.reqVndUnit);
     const reqCr = w.reqCrystals || 0;
     try {
-      const batch = db.batch();
-      batch.update(db.collection("realms").doc(realmId).collection("worlds").doc(w.id), {
-        unlocked: true,
-        unlockRequested: false
-      });
-      if (reqVndRaw > 0 || reqCr > 0) {
-        batch.update(db.collection("realms").doc(realmId), {
-          slaveVND: firebase.firestore.FieldValue.increment(-reqVndRaw),
-          slaveCrystals: firebase.firestore.FieldValue.increment(-reqCr)
+      await db.runTransaction(async tx => {
+        const realmRef = db.collection("realms").doc(realmId);
+        const worldRef = realmRef.collection("worlds").doc(w.id);
+        const snap = await tx.get(realmRef);
+        const d = snap.data() || {};
+        tx.update(worldRef, {
+          unlocked: true,
+          unlockRequested: false
         });
+        if (reqVndRaw > 0 || reqCr > 0) {
+          tx.update(realmRef, {
+            slaveVND: Math.max(0, (d.slaveVND || 0) - reqVndRaw),
+            slaveCrystals: Math.max(0, (d.slaveCrystals || 0) - reqCr)
+          });
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const completelyDestroyWorld = async (wId) => {
+    try {
+      const realmRef = db.collection("realms").doc(realmId);
+      const worldRef = realmRef.collection("worlds").doc(wId);
+      const missionsSnap = await worldRef.collection("missions").get();
+      
+      let pendingToSubtract = 0;
+      const batch = db.batch();
+      
+      missionsSnap.forEach(doc => {
+        if (doc.data().state === "submitted") pendingToSubtract++;
+        batch.delete(doc.ref);
+      });
+      
+      batch.delete(worldRef);
+      if (pendingToSubtract > 0) {
+        batch.update(realmRef, { pendingApprovals: firebase.firestore.FieldValue.increment(-pendingToSubtract) });
       }
+      
       await batch.commit();
-    } catch (e) {}
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleDestroy = async (w) => {
@@ -1143,7 +1179,7 @@ function WorldOfConquest({
     const hasEntered = enteredWorldIds.includes(w.id);
     if (!hasEntered || w.state === "draft") {
       try {
-        await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).delete();
+        await completelyDestroyWorld(w.id);
         onBack();
       } catch (e) {}
     } else {
@@ -1157,7 +1193,7 @@ function WorldOfConquest({
 
   const approveDestroy = async (w) => {
     try {
-      await db.collection("realms").doc(realmId).collection("worlds").doc(w.id).delete();
+      await completelyDestroyWorld(w.id);
       onBack();
     } catch (e) {}
   };
@@ -2531,6 +2567,7 @@ function Stub({
 function Options({
   identity,
   connected,
+  peerConnected,
   onBack,
   onReset,
   onUpdateIdentity
@@ -2581,7 +2618,7 @@ function Options({
     className: "k"
   }, "Link"), React.createElement("span", {
     className: "v"
-  }, connected ? "Linked ✓" : "Offline")), 
+  }, !connected ? "Connecting..." : peerConnected ? "Linked ✓" : "Peer Offline")), 
   
   React.createElement("button", {
     className: "btn ghost",
@@ -2697,12 +2734,14 @@ function App() {
   const [identity, setIdentity] = useState(loadIdentity());
   const [screen, setScreen] = useState("intro");
   const [connected, setConnected] = useState(false);
+  const [peerConnected, setPeerConnected] = useState(false);
   const [realmData, setRealmData] = useState(null);
   const [activeWorldId, setActiveWorldId] = useState(null);
   const [enteredWorldIds, setEnteredWorldIds] = useState([]);
   const [worlds, setWorlds] = useState([]);
   const [quitting, setQuitting] = useState(false);
   
+  // Base Firestore subscription
   useEffect(() => {
     if (!identity || !db) return;
     const ref = db.collection("realms").doc(identity.realmId);
@@ -2715,6 +2754,46 @@ function App() {
     return unsub;
   }, [identity]);
   
+  // Heartbeat Ping
+  useEffect(() => {
+    if (!identity || !db || !connected) return;
+    const role = identity.role;
+    const docRef = db.collection("realms").doc(identity.realmId);
+    
+    const ping = () => {
+      docRef.update({
+        [role + "LastSeen"]: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(() => {});
+    };
+    
+    ping();
+    const interval = setInterval(ping, 15000);
+    return () => clearInterval(interval);
+  }, [identity, connected]);
+  
+  // Peer Presence Check
+  useEffect(() => {
+    if (!identity || !realmData) {
+      setPeerConnected(false);
+      return;
+    }
+    const peerRole = identity.role === "master" ? "slave" : "master";
+    
+    const checkPeer = () => {
+      const peerLastSeen = realmData[peerRole + "LastSeen"];
+      if (!peerLastSeen) {
+        setPeerConnected(false);
+        return;
+      }
+      const isRecent = (Date.now() - peerLastSeen.toMillis()) < 40000;
+      setPeerConnected(isRecent);
+    };
+    
+    checkPeer();
+    const interval = setInterval(checkPeer, 5000);
+    return () => clearInterval(interval);
+  }, [identity, realmData]);
+
   useEffect(() => {
     if (!identity || !db) return;
     const unsub = db.collection("realms").doc(identity.realmId).collection("worlds").orderBy("order").onSnapshot(snap => setWorlds(snap.docs.map(d => ({
@@ -2738,8 +2817,9 @@ function App() {
   const reset = () => {
     clearIdentity();
     setIdentity(null);
-    setScreen("welcome");
+    setScreen("intro");
     setConnected(false);
+    setPeerConnected(false);
   };
   
   const doQuit = () => {
@@ -2776,12 +2856,13 @@ function App() {
     React.createElement("div", { className: "scrim" }), 
     
     // HUD only appears for Conqueror
-    React.createElement(ConquerorHUD, { identity, connected, realmData }),
+    React.createElement(ConquerorHUD, { identity, connected, peerConnected, realmData }),
     
     screen === "welcome" && React.createElement(Welcome, {
     identity: identity,
     hasActiveWorld: !!activeWorldId,
     connected: connected,
+    peerConnected: peerConnected,
     realmData: realmData,
     go: setScreen,
     onQuit: () => setQuitting(true)
@@ -2813,6 +2894,7 @@ function App() {
   }), screen === "options" && React.createElement(Options, {
     identity: identity,
     connected: connected,
+    peerConnected: peerConnected,
     onBack: back,
     onReset: reset,
     onUpdateIdentity: updateIdentity
